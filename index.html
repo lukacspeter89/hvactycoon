@@ -1,0 +1,1682 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Épületgépész Iroda Tycoon — épületgépészeti tervezőiroda szimulátor</title>
+<style>
+:root{
+  --bg:#eef1f5; --card:#ffffff; --ink:#1c2733; --muted:#5c6b7a; --line:#dde3ea;
+  --navy:#14293d; --accent:#0e7a8a; --accent2:#0e5f8a;
+  --ok:#1a7f4e; --warn:#b96a00; --bad:#b3362c; --gold:#8a6d0e;
+  --chip:#eaf2f4;
+}
+*{box-sizing:border-box; margin:0; padding:0}
+html,body{height:100%}
+body{font-family:'Segoe UI',system-ui,-apple-system,Roboto,Arial,sans-serif; background:var(--bg); color:var(--ink); font-size:14px}
+button{font-family:inherit; cursor:pointer}
+.hdr{background:var(--navy); color:#fff; padding:10px 18px; display:flex; align-items:center; gap:18px; flex-wrap:wrap; position:sticky; top:0; z-index:50}
+.hdr h1{font-size:17px; font-weight:600; letter-spacing:.3px}
+.hdr h1 span{color:#7fd1de; font-weight:400}
+.hdr .date{font-size:15px; font-weight:600; min-width:150px}
+.hdr .cash{font-size:16px; font-weight:700}
+.hdr .cash.neg{color:#ff9b8f}
+.stagebadge{background:#1f3d58; border:1px solid #35597c; padding:3px 10px; border-radius:20px; font-size:12px; color:#bcd6ea}
+.spd{display:flex; gap:4px; margin-left:auto}
+.spd button{background:#1f3d58; color:#cfe3f2; border:1px solid #35597c; border-radius:6px; padding:5px 11px; font-size:13px}
+.spd button.on{background:var(--accent); border-color:var(--accent); color:#fff; font-weight:700}
+.kpis{display:grid; grid-template-columns:repeat(auto-fit,minmax(148px,1fr)); gap:10px; padding:12px 18px 0}
+.kpi{background:var(--card); border:1px solid var(--line); border-radius:10px; padding:9px 12px}
+.kpi .l{font-size:11px; text-transform:uppercase; letter-spacing:.5px; color:var(--muted)}
+.kpi .v{font-size:16px; font-weight:700; margin-top:2px}
+.kpi .s{font-size:11px; color:var(--muted)}
+.kpi .v.ok{color:var(--ok)} .kpi .v.bad{color:var(--bad)} .kpi .v.warn{color:var(--warn)}
+.tabs{display:flex; gap:2px; padding:12px 18px 0; flex-wrap:wrap}
+.tabs button{background:transparent; border:none; border-bottom:3px solid transparent; padding:8px 13px; font-size:13.5px; color:var(--muted); font-weight:600; border-radius:6px 6px 0 0}
+.tabs button.on{color:var(--accent); border-bottom-color:var(--accent); background:#fff}
+.tabs button .badge{background:var(--bad); color:#fff; border-radius:10px; padding:1px 6px; font-size:11px; margin-left:5px}
+.tabs button .badge.blue{background:var(--accent)}
+main{padding:12px 18px 60px; max-width:1400px}
+.panel{display:none}
+.panel.on{display:block}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+.grid3{display:grid; grid-template-columns:repeat(3,1fr); gap:12px}
+@media(max-width:980px){.grid2,.grid3{grid-template-columns:1fr}}
+.card{background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px; margin-bottom:12px}
+.card h3{font-size:13px; text-transform:uppercase; letter-spacing:.6px; color:var(--muted); margin-bottom:10px}
+.card h3 .r{float:right; text-transform:none; letter-spacing:0; font-weight:400}
+.row{display:flex; justify-content:space-between; gap:8px; padding:4px 0; font-size:13.5px}
+.row .m{color:var(--muted)}
+.hr{border-top:1px solid var(--line); margin:8px 0}
+.tag{display:inline-block; background:var(--chip); color:var(--accent2); border-radius:5px; padding:2px 7px; font-size:11.5px; font-weight:600; margin-right:5px}
+.tag.gray{background:#eceff3; color:var(--muted)}
+.tag.red{background:#f7e5e3; color:var(--bad)}
+.tag.green{background:#e2f2e9; color:var(--ok)}
+.tag.gold{background:#f5eeda; color:var(--gold)}
+.btn{background:var(--accent); color:#fff; border:none; border-radius:7px; padding:7px 14px; font-size:13px; font-weight:600}
+.btn:hover{filter:brightness(1.08)}
+.btn.sec{background:#fff; color:var(--accent2); border:1px solid var(--accent2)}
+.btn.danger{background:var(--bad)}
+.btn.small{padding:4px 10px; font-size:12px}
+.btn:disabled{background:#c3ccd4; border-color:#c3ccd4; color:#fff; cursor:not-allowed}
+.lead{border:1px solid var(--line); border-radius:9px; padding:11px 13px; margin-bottom:10px; background:#fbfcfd}
+.lead .t{font-weight:700; font-size:14px}
+.lead .d{color:var(--muted); font-size:12.5px; margin:4px 0 8px; line-height:1.45}
+.lead .meta{display:flex; flex-wrap:wrap; gap:10px; font-size:12.5px; margin-bottom:8px}
+.lead .meta b{font-weight:700}
+.quote{background:#f0f6f7; border-radius:8px; padding:10px; margin-top:8px}
+.quote input[type=range]{width:100%}
+.quote .pr{display:flex; justify-content:space-between; font-size:13px; margin-bottom:4px}
+.quote .pr b{font-size:15px}
+.proj{border:1px solid var(--line); border-radius:9px; padding:10px 13px; margin-bottom:10px; background:#fbfcfd}
+.bar{height:8px; background:#e4e9ee; border-radius:5px; overflow:hidden; margin:6px 0}
+.bar i{display:block; height:100%; background:var(--accent); border-radius:5px}
+.bar i.warn{background:var(--warn)} .bar i.bad{background:var(--bad)} .bar i.ok{background:var(--ok)}
+table{width:100%; border-collapse:collapse; font-size:13px}
+th{text-align:left; color:var(--muted); font-size:11.5px; text-transform:uppercase; letter-spacing:.4px; padding:5px 6px; border-bottom:1px solid var(--line)}
+td{padding:6px; border-bottom:1px solid #eef1f4}
+td.r,th.r{text-align:right}
+.log{max-height:420px; overflow-y:auto; font-size:12.8px; line-height:1.5}
+.log div{padding:4px 6px; border-bottom:1px solid #f0f2f5}
+.log .d{color:var(--muted); margin-right:7px; font-size:11.5px}
+.log .ok{color:var(--ok)} .log .bad{color:var(--bad)} .log .warn{color:var(--warn)} .log .info{color:var(--accent2)}
+.modalwrap{position:fixed; inset:0; background:rgba(12,24,36,.55); display:none; align-items:center; justify-content:center; z-index:100; padding:16px}
+.modalwrap.on{display:flex}
+.modal{background:#fff; border-radius:12px; max-width:640px; width:100%; padding:22px; max-height:88vh; overflow-y:auto; box-shadow:0 18px 60px rgba(0,0,0,.3)}
+.modal.wide{max-width:920px}
+.modal h2{font-size:18px; margin-bottom:10px}
+.rep h4{font-size:12px; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); margin:12px 0 5px}
+.rep .tot{border-top:1px solid var(--line); margin-top:5px; padding-top:5px; font-weight:700}
+.modal .body{font-size:14px; line-height:1.55; color:#2a3644}
+.modal .opts{margin-top:16px; display:flex; flex-direction:column; gap:8px}
+.modal .opts button{text-align:left; background:#f4f7f9; border:1px solid var(--line); border-radius:8px; padding:11px 13px; font-size:13.5px}
+.modal .opts button:hover{border-color:var(--accent); background:#eef6f7}
+.modal .opts button b{display:block; margin-bottom:2px}
+.modal .opts button span{color:var(--muted); font-size:12.5px}
+.toast{position:fixed; right:16px; bottom:16px; z-index:120; display:flex; flex-direction:column; gap:8px}
+.toast div{background:var(--navy); color:#fff; padding:10px 15px; border-radius:8px; font-size:13px; box-shadow:0 6px 20px rgba(0,0,0,.25); max-width:330px; animation:tin .25s}
+.toast div.ok{background:var(--ok)} .toast div.bad{background:var(--bad)} .toast div.warn{background:#8a5200}
+@keyframes tin{from{transform:translateY(12px); opacity:0}}
+canvas{width:100%; height:190px}
+.help{font-size:12.5px; color:var(--muted); line-height:1.5; margin-top:6px}
+select,input[type=number],textarea{font-family:inherit; font-size:13px; padding:6px 8px; border:1px solid var(--line); border-radius:6px; background:#fff; color:var(--ink)}
+textarea{width:100%; height:110px; font-family:monospace; font-size:11px}
+.slider-row{display:flex; align-items:center; gap:10px}
+.slider-row input{flex:1}
+.mut{color:var(--muted)}
+.big{font-size:19px; font-weight:800}
+.empl{border:1px solid var(--line); border-radius:9px; padding:10px 13px; margin-bottom:9px; background:#fbfcfd; display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap}
+.prodc{border:1px solid var(--line); border-radius:9px; padding:12px 14px; margin-bottom:10px; background:#fbfcfd}
+.win{color:var(--ok); font-weight:800}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <h1>Épületgépész Iroda <span>Tycoon</span></h1>
+  <div class="date" id="hDate">2026. január 1.</div>
+  <div class="cash" id="hCash">0 Ft</div>
+  <div class="stagebadge" id="hStage">Mellékállású EV</div>
+  <div class="stagebadge" id="hFree">ma szabad: 0 óra</div>
+  <div class="spd">
+    <button class="on" onclick="nextDay()">Nap lezárása ▶</button>
+    <button onclick="nextDays(7)">▶▶ 7 nap</button>
+  </div>
+</div>
+<div class="kpis" id="kpis"></div>
+<div class="tabs" id="tabs"></div>
+<main id="main"></main>
+<div class="modalwrap" id="modalwrap"><div class="modal" id="modal"></div></div>
+<div class="toast" id="toast"></div>
+<script>
+'use strict';
+/* ============ SEGÉDFÜGGVÉNYEK ============ */
+function fmt(n){ n=Math.round(n); const s=Math.abs(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g,' '); return (n<0?'−':'')+s+' Ft'; }
+function fmtS(n){ if(Math.abs(n)>=1e6) return (n/1e6).toFixed(1).replace('.',',')+' M Ft'; return fmt(n); }
+function rnd(a,b){ return a+Math.random()*(b-a); }
+function ri(a,b){ return Math.floor(rnd(a,b+1)); }
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function chance(p){ return Math.random()<p; }
+function clamp(x,a,b){ return Math.max(a,Math.min(b,x)); }
+function gauss(){ return (Math.random()+Math.random()+Math.random())/3; }
+const HMON=['január','február','március','április','május','június','július','augusztus','szeptember','október','november','december'];
+const MLEN=[31,28,31,30,31,30,31,31,30,31,30,31];
+function calDate(day){ // day 0 = 2026.01.01
+  let y=2026,m=0,d=day;
+  for(;;){ const ml=(m===1&&((y%4===0&&y%100!==0)||y%400===0))?29:MLEN[m];
+    if(d<ml) return {y,m,d:d+1};
+    d-=ml; m++; if(m===12){m=0;y++;} }
+}
+function dateStr(day){ const c=calDate(day); return c.y+'. '+HMON[c.m]+' '+c.d+'.'; }
+function dateShort(day){ const c=calDate(day); return (c.m+1).toString().padStart(2,'0')+'.'+c.d.toString().padStart(2,'0')+'.'; }
+function monthKey(day){ const c=calDate(day); return c.y*12+c.m; }
+const HDOW=['hétfő','kedd','szerda','csütörtök','péntek','szombat','vasárnap'];
+function dow(day){ return (day+3)%7; } // 2026.01.01 = csütörtök
+
+/* ============ KONFIGURÁCIÓ ============ */
+const CLIENTS={
+  magan:   {n:'Magánszemély',    terms:5,  lateP:0.10, lateD:14, defP:0.015, priceSens:1.25, advance:0.4},
+  epitesz: {n:'Építésziroda',    terms:30, lateP:0.28, lateD:18, defP:0.01,  priceSens:1.0,  advance:0},
+  kivitelezo:{n:'Kivitelező',    terms:75, lateP:0.35, lateD:40, defP:0.06,  priceSens:1.1,  advance:0},
+  beruhazo:{n:'Beruházó',        terms:45, lateP:0.22, lateD:30, defP:0.03,  priceSens:0.95, advance:0},
+  allami:  {n:'Állami / önkorm.',terms:45, lateP:0.15, lateD:25, defP:0.0,   priceSens:1.35, advance:0}
+};
+const PTYPES=[
+ {id:'gaz',   n:'Gázterv (csere / új készülék)', ref:120000, h:12,  dl:25,  cl:['magan','magan','epitesz'], min:'mellek',
+   ds:['Kombi kazán cseréje kondenzációsra, meglévő családi házban.','Új gázbekötés tervezése, MEO egyeztetéssel.','Gázkészülék áthelyezés, kéménybélelés tervvel.']},
+ {id:'pad',   n:'Padlófűtés + radiátor terv', ref:190000, h:20, dl:32, cl:['magan','magan','epitesz'], min:'mellek',
+   ds:['Felújítás alatt álló lakás, vegyes hőleadós rendszer.','Új építésű ház földszintjére padlófűtés, emeletre radiátor.']},
+ {id:'hp',    n:'Hőszivattyús rendszerterv', ref:245000, h:26, dl:32, cl:['magan','epitesz'], min:'mellek',
+   ds:['Levegő-víz hőszivattyú méretezés, puffer + HMV.','Gázról hőszivattyúra állás, meglévő radiátorok ellenőrzésével.']},
+ {id:'ml',    n:'Gépészeti műszaki leírás', ref:95000, h:8, dl:14, cl:['epitesz','magan'], min:'mellek',
+   ds:['Egyszerű bejelentéshez gépészeti munkarész.','Banki hitelhez műszaki dokumentáció kiegészítés.']},
+ {id:'csal',  n:'Családi ház komplett gépészet', ref:850000, h:85, dl:60, cl:['epitesz','epitesz','magan'], min:'mellek',
+   ds:['140 m² új építésű ház: fűtés-hűtés, víz-csatorna, szellőzés kiviteli terv.','180 m² ház hőszivattyúval és központi porszívóval, igényes megrendelő.','CSOK-os családi ház, szoros költségkeret.']},
+ {id:'tars',  n:'Társasház gépészeti terve', ref:3300000, h:300, dl:120, cl:['epitesz','beruhazo'], min:'foallas',
+   ds:['12 lakásos társasház teljes épületgépészete, engedélyezési + kiviteli.','Tetőtér-beépítés 8 új lakással, meglévő rendszerek bővítése.']},
+ {id:'iroda', n:'Irodaház / csarnok gépészet', ref:9200000, h:800, dl:210, cl:['beruhazo','kivitelezo'], min:'kft', team:2,
+   ds:['3000 m² logisztikai csarnok iroda-blokkal, VRF + légtechnika.','Irodaház felújítás, BREEAM minősítéshez gépészeti áttervezés.']},
+ {id:'tender',n:'Közbeszerzési tervpályázat', ref:15500000, h:1300, dl:300, cl:['allami'], min:'kft', team:3, tender:true, needIns:true, needRef:2,
+   ds:['Iskolaépület energetikai felújítása, teljes gépészeti tervezés.','Önkormányzati uszoda gépészeti rekonstrukció, tender 5-7 induló irodával.','Kórházi szárny légtechnikai áttervezése, közbeszerzés.']}
+];
+const ARCH_NAMES=['Kovács Építész Stúdió','Forma-Terv Kft.','Archiline Studio','Nádas és Társa','Vektor Építésziroda','Panoráma Terv','Struktúra Műterem','BauArt Studio','Fehérház Építésziroda','Mérték Stúdió'];
+const CLIENT_NAMES=['Szabó család','Kiss Péterék','Nagy Gáborék','Tóth família','Horváth házaspár','Varga Lászlóék','Molnár család','Balogh Andrásék'];
+const CONTR_NAMES=['ÉpKomplex Zrt.','BuildMax Kft.','Generál-Bau Kft.','Struktor Építő Zrt.','Fővár Építő Kft.'];
+const DEV_NAMES=['Városliget Invest','GreenPark Development','Duna Property Kft.','UrbanHome Zrt.'];
+const GOV_NAMES=['XI. ker. Önkormányzat','Megyei Kórház','Tankerületi Központ','Városüzemeltetési Zrt.'];
+const SUB_NAMES=['Kertész Béla (nyugdíjas gépész)','Hajdu Zsolt EV','Miskei Nóra EV','Tarján András EV','Vas Gergely EV','Dombi Kata EV','Sipos Máté EV','Rónai Judit EV'];
+const EMP_NAMES=['Fekete Ádám','Somogyi Petra','Lukács Bence','Oláh Réka','Bíró Márton','Katona Dóra','Simon Gergő','Váradi Anna','Pintér Tamás','Orsós Lilla','Fazekas Dávid','Szűcs Eszter'];
+const EMP_LEVELS=[
+ {id:'gyak', n:'Gyakornok', gross:480000, eff:13, lic:false, d:'Friss diplomás, sokat kell tanítani, de olcsó és lojális.'},
+ {id:'jun',  n:'Junior tervező', gross:780000, eff:21, lic:false, d:'2-3 év tapasztalat, önállóan viszi a kisebb terveket.'},
+ {id:'med',  n:'Medior tervező', gross:1080000, eff:28, lic:false, d:'Megbízható, komplett családi házat egyedül végigvisz.'},
+ {id:'sen',  n:'Senior tervező (G jogosultsággal)', gross:1550000, eff:33, lic:true, d:'Aláírhat, nagy projektet vezet. Nehéz találni, könnyű elveszíteni.'}
+];
+const PRODUCTS=[
+ {id:'excel', n:'Méretező Excel-csomag', devH:60, price:14900, maintH:2,
+  d:'Fűtési hőigény, radiátor- és csőméretező táblák gépészeknek és igényes kivitelezőknek. Kis, de azonnali piac.',
+  unlock:s=>s.counters.done>=3, unlockTxt:'3 lezárt projekt kell'},
+ {id:'tipus', n:'Típusterv-katalógus építészeknek', devH:160, price:49000, maintH:3,
+  d:'Előre kidolgozott gépészeti csomagok tipikus családi házakra — az építész partnerek veszik, gyorsítja a közös munkát.',
+  unlock:s=>s.counters.done>=12, unlockTxt:'12 lezárt projekt kell'},
+ {id:'saas',  n:'GépészCalc webapp (előfizetés)', devH:420, price:9900, maintH:12, server:35000, saas:true,
+  d:'Online méretező és ajánlatkészítő gépészeknek, havidíjas modell. Lassan épül, de ez az igazi stabil láb.',
+  unlock:s=>s.form!=='mellek', unlockTxt:'Főállás kell hozzá'},
+ {id:'kurzus',n:'Online kurzus: gépészet építészeknek', devH:220, price:59000, maintH:1, launch:true,
+  d:'Videókurzus, amiből az építészek megértik, mit és mikor kérjenek a gépésztől. Indításkor nagyot szól, aztán lecseng — újra lehet indítani.',
+  unlock:s=>s.rep>=35, unlockTxt:'35 hírnév kell'}
+];
+
+const INTERNALS=[
+ {id:'meretezo', n:'Saját méretező szoftvercsomag', devH:80, cost:250000, monthly:0,
+  d:'Hőigény-, csőhálózat- és légtechnika-méretezők a saját munkafolyamatodra szabva. Minden új projekt tervezési ideje 18%-kal csökken.',
+  eff:'tervezési idő −18% az új projekteken',
+  unlock:s=>s.counters.done>=3, unlockTxt:'3 lezárt projekt kell'},
+ {id:'erp', n:'ERP / irodairányítási rendszer', devH:110, cost:500000, monthly:25000,
+  d:'Projektszintű pénzügyek napról napra: ráfordítás, várható fedezet — és prediktív cashflow-görbe, ami megmutatja, hova futsz ki, ha mindenki időben fizet.',
+  eff:'projekt-gazdaságosság a Projektek fülön + 60 napos cashflow-előrejelzés a grafikonon',
+  unlock:s=>s.counters.done>=5, unlockTxt:'5 lezárt projekt kell'},
+ {id:'aitan', n:'AI tervezési tanácsadó', devH:60, cost:300000, monthly:30000,
+  d:'A terveidet géppel ellenőrizteted, ütközésvizsgálat, szabványfigyelés. Ritkábban kell áttervezni, és gyorsabban is haladsz.',
+  eff:'áttervezési kockázat −60%, tervezési idő −10% az új projekteken',
+  unlock:s=>s.rep>=25, unlockTxt:'25 hírnév kell'},
+ {id:'aipiac', n:'AI piackutató', devH:50, cost:300000, monthly:30000,
+  d:'Piaci árakat, versenytársakat és fizetési fegyelmet elemez. Minden ajánlatnál árat javasol a legjobb ár/esély arányra, és kiszűri a kockázatos megrendelőket.',
+  eff:'AI árjavaslat az ajánlatoknál + nemfizetési kockázat −30%',
+  unlock:s=>s.counters.done>=8, unlockTxt:'8 lezárt projekt kell (kell a tanítóadat)'}
+];
+function iLive(id){ return !!(S.internals&&S.internals[id]&&S.internals[id].live); }
+
+/* ============ ÁLLAPOT ============ */
+let S=null;
+function newState(){
+ return {
+  day:0, speed:1, lastMonthKey:monthKey(0),
+  cash:800000, form:'mellek', vat:false, vatOwed:0,
+  rep:12, stress:10, sickUntil:0,
+  marketing:40000, insurance:false, accountant:1, office:0,
+  alloc:{proj:6,prod:2,net:1,rest:1}, weekendWork:false, todayFree:0,
+  jobNet:690000, jobSuspicion:0, living:350000,
+  cadCost:34000, inflAcc:1,
+  leads:[], quotes:[], projects:[], invoices:[], nextId:1,
+  loans:{od:{open:false,limit:0,used:0}, list:[]},
+  employees:[], candidates:[], candRefresh:0,
+  subs:[], subPool:[], subCostMonth:0,
+  products:{}, internals:{}, prodPriority:false,
+  partners:[],
+  market:1.0, mods:[],
+  monthAcc:{rev:0,cost:0,prodRev:0,tax:0}, monthLedger:[],
+  yearTaxBase:0, yearRev12:[], hist:[],
+  counters:{done:0,doneBig:0,lost:0,won:0,defaults:0,months:0},
+  taxDue:0, taoAcc:0,
+  nextEvent:ri(6,14), grace:0,
+  winStreak:0, won:false, over:false,
+  log:[], evQ:[]
+ };
+}
+function migrateState(){
+  if(!S.subs)S.subs=[];
+  if(!S.subPool)S.subPool=[];
+  if(S.subCostMonth==null)S.subCostMonth=0;
+  if(!S.alloc)S.alloc={proj:6,prod:2,net:1,rest:1};
+  if(S.todayFree==null)S.todayFree=0;
+  if(S.living==null)S.living=350000;
+  if(!S.monthLedger)S.monthLedger=[];
+  if(!S.internals)S.internals={};
+}
+function addLog(txt,cls){ S.log.unshift({d:S.day,t:txt,c:cls||''}); if(S.log.length>250) S.log.pop(); }
+function toast(txt,cls){ const t=document.getElementById('toast'); const d=document.createElement('div'); if(cls)d.className=cls; d.textContent=txt; t.appendChild(d); setTimeout(()=>d.remove(),5200); }
+function money(delta,why,cls){ S.cash+=delta; if(delta>0){S.monthAcc.rev+= (why&&why.cost)?0:0;} }
+function income(a,txt,isProd){ S.cash+=a; S.monthAcc.rev+=a; if(isProd)S.monthAcc.prodRev+=a; if(txt)addLog('+'+fmt(a)+' — '+txt,'ok'); if(S.monthLedger)S.monthLedger.push({t:txt||'bevétel',a:Math.round(a),k:isProd?'prod':'in'}); }
+function expense(a,txt){ S.cash-=a; S.monthAcc.cost+=a; if(txt)addLog('−'+fmt(a)+' — '+txt,'bad'); if(S.monthLedger)S.monthLedger.push({t:txt||'kiadás',a:Math.round(a),k:'out'}); }
+/* ============ KAPACITÁS ============ */
+function baseHours(){ return S.form==='mellek'?25:45+(S.weekendWork?9:0); }
+function playerDailyHours(){
+  const d=dow(S.day);
+  if(S.form==='mellek') return d<5?3:(d===5?7:5);
+  return d<5?9:(S.weekendWork?(d===5?5:4):0);
+}
+function newDaySetup(){ S.todayFree=Math.round(playerDailyHours()*playerEff()*2)/2; }
+function quoteCost(l){ return l.tender?8: l.estRef>2000000?4: l.estRef>400000?2:1; }
+function playerEff(){
+  let e=1;
+  if(S.stress>75) e*=0.8;
+  if(S.day<S.sickUntil) e*=0.25;
+  return e;
+}
+function weeklyCapacity(){
+  let h=baseHours()*playerEff();
+  for(const em of S.employees){
+    let eff=em.eff;
+    if(S.day-em.hired<35) eff*=0.5;           // betanulás
+    if(em.morale<40) eff*=0.75;
+    h+=eff;
+  }
+  h-=S.employees.length*1.5;                   // menedzsment-teher
+  for(const sb of S.subs) h+=sb.cap*0.9;       // alvállalkozók (koordinációs veszteséggel)
+  for(const pid in S.products){ const p=S.products[pid]; if(p.live){ const cfg=PRODUCTS.find(x=>x.id===pid); h-=cfg.maintH*0.25; } }
+  return Math.max(2,h);
+}
+function usedHoursWeekly(){
+  let u=0; for(const p of S.projects) u+=Math.min(8, p.hLeft/((p.deadline-S.day)/7+0.01));
+  return u;
+}
+function signerSlots(){ let s=S.form==='mellek'?2:4; for(const e of S.employees) if(e.lic)s+=4; return s; }
+
+/* ============ AJÁNLATKÉRÉSEK ============ */
+function leadRate(){ // lead/nap várható érték
+  let r=0.14 + S.rep/220 + S.marketing/900000;
+  r*= (S.form==='mellek'?0.7:1);
+  r*= S.market;
+  for(const m of S.mods) if(m.type==='leads') r*=m.mag;
+  for(const pa of S.partners) r+= pa.rel*0.012;
+  return r;
+}
+function clientName(cl){
+  if(cl==='magan')return pick(CLIENT_NAMES);
+  if(cl==='epitesz'){ if(S.partners.length&&chance(0.55)) return pick(S.partners).name; return pick(ARCH_NAMES); }
+  if(cl==='kivitelezo')return pick(CONTR_NAMES);
+  if(cl==='beruhazo')return pick(DEV_NAMES);
+  return pick(GOV_NAMES);
+}
+function formRank(f){ return f==='mellek'?0:f==='foallas'?1:2; }
+function genLead(){
+  const avail=PTYPES.filter(t=>{
+    if(formRank(S.form)<formRank(t.min))return false;
+    if(t.team && S.employees.length<t.team)return false;
+    if(t.needIns && !S.insurance)return false;
+    if(t.needRef && S.counters.doneBig<t.needRef)return false;
+    if(t.id==='tender' && !chance(0.35)) return false;
+    return true;
+  });
+  if(!avail.length)return;
+  // kisebb munkák gyakoribbak
+  const w=avail.map(t=>1/Math.sqrt(t.ref/100000));
+  let tot=w.reduce((a,b)=>a+b,0), x=Math.random()*tot, t=avail[0];
+  for(let i=0;i<avail.length;i++){ if(x<w[i]){t=avail[i];break;} x-=w[i]; }
+  let cl=pick(t.cl);
+  let sizeF=rnd(0.75,1.35);
+  let priceMod=1; for(const m of S.mods) if(m.type==='price') priceMod*=m.mag;
+  const trueRef=t.ref*sizeF*S.inflAcc*priceMod;
+  const name=clientName(cl);
+  const partner=S.partners.find(p=>p.name===name);
+  const lead={
+    id:S.nextId++, type:t.id, tn:t.n, cl, name,
+    desc:pick(t.ds),
+    trueRef, estRef:trueRef*rnd(0.88,1.12),
+    hours:Math.round(t.h*sizeF*rnd(0.9,1.15)),
+    dl:Math.round(t.dl*rnd(0.9,1.2)),
+    expires:S.day+ri(4,9),
+    tender:!!t.tender, partner:partner?partner.rel:0,
+    bidders:t.tender?ri(4,7):0
+  };
+  S.leads.push(lead);
+  addLog('Új ajánlatkérés: '+lead.tn+' — '+lead.name,'info');
+  if(S.leads.length>14) S.leads.shift();
+}
+
+/* ============ AJÁNLAT / VERSENY ============ */
+function submitQuote(leadId, price){
+  const li=S.leads.findIndex(l=>l.id===leadId); if(li<0)return;
+  const cost=quoteCost(S.leads[li]);
+  if(S.todayFree<cost){ toast('Ma már nincs időd ajánlatot írni ehhez ('+cost+' óra kellene). Zárd le a napot!','warn'); return; }
+  S.todayFree-=cost;
+  const l=S.leads.splice(li,1)[0];
+  l.price=price; l.resolve=S.day+ri(2,6);
+  S.quotes.push(l);
+  addLog('Ajánlat beadva ('+cost+' munkaóra): '+l.tn+' — '+fmt(price),'info');
+}
+function resolveQuote(q){
+  const c=CLIENTS[q.cl];
+  const ratio=q.price/q.trueRef;
+  let win;
+  let reason='';
+  if(q.tender){
+    // szimulált versenytárs-árak, legalacsonyabb nyer (kis hírnév-súllyal)
+    const bids=[]; for(let i=0;i<q.bidders;i++) bids.push(q.trueRef*rnd(0.78,1.05));
+    const myScore=q.price*(1-clamp(S.rep-40,0,50)*0.002);
+    const best=Math.min.apply(null,bids);
+    win=myScore<best;
+    reason=win?'A tiéd volt a legjobb pontszámú ajánlat ('+q.bidders+' induló közül).':'Egy másik iroda '+fmt(best)+' körüli áron vitte el ('+q.bidders+' induló).';
+  } else {
+    let eff=ratio; if(S.vat && q.cl==='magan') eff*=1.14; // ÁFA-hátrány lakosságnál
+    let p=1.55-1.25*eff*Math.pow(c.priceSens,0.6);
+    p+=S.rep/100*0.22;
+    p+=q.partner*0.05;
+    for(const m of S.mods) if(m.type==='winp') p+=m.mag;
+    if(S.form==='mellek' && q.trueRef>400000) p-=0.08; // "mellékállásban bízhatok benne?"
+    p=clamp(p,0.03,0.93);
+    win=chance(p);
+    if(!win){
+      const r=Math.random();
+      if(r<0.45) reason='Egy olcsóbb iroda vitte, kb. '+fmt(q.trueRef*rnd(0.72,0.9))+'-ért.';
+      else if(r<0.65) reason='A megrendelő ismerőse „megcsinálja olcsóbban".';
+      else if(r<0.8) reason='Elhalasztották a beruházást — pénzhiány.';
+      else reason='Nagyobb, ismertebb irodát választottak.';
+    } else reason='';
+  }
+  if(win){
+    S.counters.won++;
+    const adv=CLIENTS[q.cl].advance;
+    let hEff=q.hours;
+    if(iLive('meretezo')) hEff*=0.82;
+    if(iLive('aitan')) hEff*=0.90;
+    hEff=Math.max(2,Math.round(hEff));
+    const proj={id:S.nextId++, type:q.type, tn:q.tn, cl:q.cl, name:q.name, price:q.price,
+      hTot:hEff, hLeft:hEff, deadline:S.day+q.dl, started:S.day, advBilled:false, midBilled:false, rework:0};
+    S.projects.push(proj);
+    addLog('MEGBÍZÁS! '+q.tn+' — '+q.name+' ('+fmt(q.price)+')','ok');
+    toast('Nyertél: '+q.tn+' — '+fmt(q.price),'ok');
+    if(adv>0){ makeInvoice(proj, q.price*adv, 'előleg'); }
+    else if(q.price>=1800000){ makeInvoice(proj, q.price*0.3,'részszámla (30%)'); }
+    if(q.cl==='epitesz') bumpPartner(q.name,1);
+  } else {
+    S.counters.lost++;
+    addLog('Elveszett ajánlat: '+q.tn+' — '+q.name+'. '+reason,'bad');
+    toast('Nem nyertük: '+q.tn,'warn');
+  }
+}
+function bumpPartner(name,amt){
+  let p=S.partners.find(x=>x.name===name);
+  if(!p){ p={name, rel:0}; S.partners.push(p); }
+  p.rel=clamp(p.rel+amt,0,5);
+}
+
+/* ============ SZÁMLÁK / FIZETÉS ============ */
+function vatMul(){ return S.vat?1.27:1; }
+function makeInvoice(proj, net, label){
+  const c=CLIENTS[proj.cl];
+  let due=S.day+c.terms;
+  const inv={id:S.nextId++, proj:proj.tn, name:proj.name, cl:proj.cl,
+    net, gross:net*vatMul(), due, label, late:false, status:'open'};
+  S.invoices.push(inv);
+  addLog('Számla kiállítva: '+fmt(inv.gross)+' — '+proj.name+' ('+label+'), fizetési határidő: '+dateStr(due),'info');
+}
+function payInvoice(inv,label,feeRate){
+  inv.status='paid';
+  income(inv.gross, inv.name+' fizetett ('+inv.label+')'+(label?' — '+label:''));
+  if(feeRate) expense(Math.round(inv.gross*feeRate),'követeléskezelői sikerdíj (12%) — '+inv.name);
+}
+function defaultInvoice(inv,recMin,recMax){
+  inv.status='default'; S.counters.defaults++;
+  const rec=chance(0.5)?rnd(recMin,recMax):0;
+  const got=inv.gross*rec;
+  if(got>0) income(got,'részleges megtérülés — '+inv.name);
+  addLog('NEM FIZET: '+inv.name+' — '+fmt(inv.gross-got)+' odaveszett'+(rec>0?' (részben megtérült)':'')+'.','bad');
+  toast('Behajthatatlan követelés: '+inv.name,'bad');
+  if(S.vat) S.vatOwed-=inv.net*0.27*(1-rec);
+}
+function demandPayment(id){
+  const inv=S.invoices.find(i=>i.id===id);
+  if(!inv||inv.status!=='open'||!inv.late||inv.demanded)return;
+  if(S.todayFree<1){ toast('A felszólításhoz 1 munkaóra kell — mára elfogyott az időd.','warn'); return; }
+  S.todayFree-=1;
+  inv.demanded=true;
+  inv.due=Math.min(inv.due,S.day+ri(3,10));
+  const pa=S.partners.find(p=>p.name===inv.name);
+  if(pa&&pa.rel>0){ pa.rel=Math.max(0,pa.rel-1); addLog('A hivatalos hangvétel rosszul esett nekik — a kapcsolat hűvösebb lett: '+inv.name+' (−1★).','warn'); }
+  addLog('Fizetési felszólítás kiment: '+inv.name+' ('+fmt(inv.gross)+'). Általában hat...','info');
+}
+function hireCollector(id){
+  const inv=S.invoices.find(i=>i.id===id);
+  if(!inv||inv.status!=='open'||!inv.demanded||inv.collector)return;
+  if(S.cash<60000){ toast('A követeléskezelő 60 000 Ft megbízási díjat kér előre.','warn'); return; }
+  expense(60000,'követeléskezelő megbízási díja — '+inv.name);
+  inv.collector=true;
+  inv.due=S.day+ri(5,15);
+  const pa=S.partners.find(p=>p.name===inv.name);
+  if(pa&&pa.rel>0){ pa.rel=Math.max(0,pa.rel-3); }
+  S.rep=clamp(S.rep-2,0,100);
+  addLog('Követeléskezelő ráállítva: '+inv.name+'. A szakmában ez gyorsan híre megy (hírnév −2'+(pa?', kapcsolat −3★':'')+').','warn');
+}
+function processInvoices(){
+  for(const inv of S.invoices){
+    if(inv.status!=='open')continue;
+    if(S.day>=inv.due){
+      const c=CLIENTS[inv.cl];
+      let defP=c.defP; for(const m of S.mods) if(m.type==='defRisk') defP*=m.mag;
+      if(iLive('aipiac')) defP*=0.65;
+      if(inv.collector){
+        if(chance(0.8)) payInvoice(inv,'a követeléskezelő behajtotta',0.12);
+        else defaultInvoice(inv,0.25,0.55);
+      } else if(inv.demanded){
+        if(chance(0.7)) payInvoice(inv,'a felszólítás hatott');
+        else if(!inv.dem2){ inv.dem2=true; inv.due=S.day+ri(7,15);
+          addLog('A felszólítás ellenére is húzzák a fizetést: '+inv.name+' — jöhet a követeléskezelő?','warn'); }
+        else if(chance(Math.min(0.5,defP*4))) defaultInvoice(inv,0.2,0.5);
+        else payInvoice(inv);
+      } else if(!inv.late && chance(c.lateP)){
+        inv.late=true; inv.due=S.day+Math.round(c.lateD*rnd(0.7,1.4));
+        addLog('Késik a fizetés: '+inv.name+' ('+fmt(inv.gross)+') — új határidő: '+dateStr(inv.due),'warn');
+        toast('Késik: '+inv.name+' — '+fmtS(inv.gross),'warn');
+      } else if(inv.late && chance(0.25) && !inv.late2){
+        inv.late2=true; inv.due=S.day+ri(10,28);
+        addLog('Még mindig nem fizet: '+inv.name+' — újabb ígéret: '+dateStr(inv.due),'warn');
+      } else if(inv.late && chance(defP*1.5)){
+        defaultInvoice(inv,0.2,0.5);
+      } else {
+        payInvoice(inv);
+      }
+    }
+  }
+  S.invoices=S.invoices.filter(i=>i.status==='open'||S.day-i.due<120);
+}
+function arTotal(){ let a=0; for(const i of S.invoices) if(i.status==='open')a+=i.gross; return a; }
+
+/* ============ NAPI MUNKA (kör lezárása) ============ */
+function endOfDayWork(){
+  const w=S.alloc, sum=Math.max(1,w.proj+w.prod+w.net+w.rest);
+  const free=Math.max(0,S.todayFree);
+  const projP=free*w.proj/sum, prodP=free*w.prod/sum, netH=free*w.net/sum, restH=free*w.rest/sum;
+  const d=dow(S.day);
+  // alkalmazottak (hétköznap dolgoznak)
+  let empH=0;
+  if(d<5) for(const em of S.employees){
+    let eff=em.eff;
+    if(S.day-em.hired<35) eff*=0.5;
+    if(em.morale<40) eff*=0.75;
+    empH+=eff/5;
+  }
+  empH=Math.max(0,empH-S.employees.length*0.3); // vezetési teher
+  // élő termékek karbantartása
+  let maint=0;
+  for(const pid in S.products){ const p=S.products[pid]; if(p.live) maint+=PRODUCTS.find(x=>x.id===pid).maintH/30; }
+  let projH=Math.max(0, projP+empH-maint-S.subs.length*0.2); // alvállalkozó-koordináció is időbe kerül
+  let devH=prodP;
+  // projektek: legszorosabb határidő először — előbb a saját (ingyenes) órák
+  const act=S.projects.slice().sort((a,b)=>a.deadline-b.deadline);
+  for(const p of act){
+    if(projH<=0)break;
+    const put=Math.min(projH,p.hLeft);
+    p.hLeft-=put; projH-=put;
+    if(p.hLeft<=0) finishProject(p);
+  }
+  // aztán az alvállalkozók (csak a ledolgozott órát számlázzák)
+  if(d<5 && S.subs.length){
+    const bySorted=S.subs.slice().sort((a,b)=>a.rate-b.rate);
+    for(const sb of bySorted){
+      let avail=sb.cap/5;
+      for(const p of S.projects.slice().sort((a,b)=>a.deadline-b.deadline)){
+        if(avail<=0)break;
+        const put=Math.min(avail,p.hLeft);
+        if(put<=0)continue;
+        p.hLeft-=put; avail-=put;
+        S.subCostMonth+=put*sb.rate;
+        if(p.hLeft<=0) finishProject(p);
+      }
+      const worked=sb.cap/5-avail;
+      if(worked>0 && chance(0.012*(1.35-sb.qual))){
+        const tp=S.projects.length?pick(S.projects):null;
+        if(tp){ const extra=Math.round(rnd(4,12)); tp.hLeft+=extra;
+          addLog('Alvállalkozói hiba: '+sb.name+' munkáját javítani kell (+'+extra+' óra) — '+tp.tn,'warn'); }
+      }
+    }
+  }
+  if(projH>0) devH+=projH*0.85; // ha elfogyott a projektmunka, marad idő fejleszteni
+  // termékfejlesztés
+  const queue=[];
+  for(const id of Object.keys(S.products)) if(S.products[id].dev&&!S.products[id].live) queue.push({st:S.products[id],cfg:PRODUCTS.find(x=>x.id===id),kind:'p',id});
+  for(const id of Object.keys(S.internals)) if(S.internals[id].dev&&!S.internals[id].live) queue.push({st:S.internals[id],cfg:INTERNALS.find(x=>x.id===id),kind:'i',id});
+  for(const q of queue){
+    if(devH<=0)break;
+    const put=Math.min(devH,q.cfg.devH-q.st.devDone);
+    q.st.devDone+=put; devH-=put;
+    if(q.st.devDone>=q.cfg.devH){ if(q.kind==='p')launchProduct(q.id); else launchInternal(q.id); }
+  }
+  // kapcsolatépítés (2 óránként egy "találkozó")
+  let nh=netH;
+  while(nh>=2){
+    nh-=2;
+    const r=Math.random();
+    if(r<0.30){ genLead(); addLog('A kapcsolatépítés új megkeresést hozott!','info'); }
+    else if(r<0.55 && S.partners.length) bumpPartner(pick(S.partners).name,0.5);
+    else if(r<0.70) bumpPartner(pick(ARCH_NAMES),0.5);
+    else S.rep=clamp(S.rep+0.4,0,100);
+  }
+  // stressz
+  const jobH=(S.form==='mellek'&&d<5)?8:0;
+  const worked=(free-restH)+jobH;
+  let delta=(worked-8)*0.45 - restH*1.1 - (worked<5?1:0);
+  S.stress=clamp(S.stress+delta,0,100);
+  if(S.stress>=100 && S.day>=S.sickUntil){
+    S.sickUntil=S.day+12; S.stress=70;
+    queueEvent({t:'Kiégés — az orvos leültetett',
+      b:'Hetek óta minden órádat kifacsarod'+(S.form==='mellek'?' a főállásod mellett':'')+'. Beütött: közel két hétig csak minimál tempóban tudsz dolgozni. A határidők nem várnak. (Tipp: hagyj időt pihenésre az időbeosztásban.)',
+      o:[{l:'Kénytelen vagy pihenni', s:'A projektjeid lassulnak.', f:()=>{}}]});
+  }
+  // részszámla nagy projektnél félidőben
+  for(const p of S.projects){
+    if(p.price>=1800000 && !p.midBilled && p.hLeft<=p.hTot*0.5){
+      p.midBilled=true; makeInvoice(p,p.price*0.3,'részszámla (60%-nál)');
+    }
+  }
+}
+function finishProject(p){
+  const i=S.projects.indexOf(p); if(i>=0)S.projects.splice(i,1);
+  S.counters.done++;
+  if(p.price>=1800000) S.counters.doneBig++;
+  const c=CLIENTS[p.cl];
+  let rest=p.price;
+  if(c.advance>0) rest-=p.price*c.advance;
+  if(p.midBilled) rest-=p.price*0.3;
+  if(p.price>=1800000 && c.advance===0) rest-=p.price*0.3; // kezdő részszámla
+  let late=S.day>p.deadline;
+  if(late){
+    const big=p.price>=1000000;
+    const pen=p.price*(big?0.1:0.08);
+    rest-=pen; S.rep=clamp(S.rep-(big?5:2),0,100);
+    addLog('Határidő-csúszás: '+p.tn+' — kötbér '+fmt(pen)+', hírnév −'+(big?5:2),'bad');
+  } else {
+    S.rep=clamp(S.rep+ (p.price>1800000?3:1.2),0,100);
+  }
+  makeInvoice(p,Math.max(0,rest),'végszámla');
+  addLog('Projekt kész: '+p.tn+' — '+p.name+(late?' (késve)':''),'ok');
+  if(p.cl==='epitesz'&&!late) bumpPartner(p.name,1);
+}
+
+/* ============ TERMÉKEK ============ */
+function startProduct(id){
+  const cfg=PRODUCTS.find(x=>x.id===id);
+  if(S.products[id])return;
+  S.products[id]={dev:true,live:false,devDone:0,subs:0,sold:0,launchAge:0,revLast:0};
+  addLog('Termékfejlesztés indult: '+cfg.n,'info');
+}
+function launchProduct(id){
+  const cfg=PRODUCTS.find(x=>x.id===id);
+  const p=S.products[id];
+  p.dev=false; p.live=true; p.launchAge=0;
+  addLog('TERMÉK PIACON: '+cfg.n+'!','ok');
+  toast('Piacra került: '+cfg.n,'ok');
+}
+function productMonthly(){
+  for(const id in S.products){
+    const p=S.products[id]; if(!p.live)continue;
+    const cfg=PRODUCTS.find(x=>x.id===id);
+    let rev=0;
+    if(cfg.saas){
+      const grow=(S.marketing/70000 + S.rep/14 + p.subs*0.06)*S.market*rnd(0.6,1.4);
+      const churn=p.subs*rnd(0.02,0.045);
+      p.subs=Math.max(0,p.subs+grow-churn);
+      rev=Math.round(p.subs)*cfg.price;
+      expense(cfg.server,'szerver + üzemeltetés (GépészCalc)');
+    } else if(cfg.launch){
+      p.launchAge++;
+      const base=(S.rep*2.2+S.marketing/50000*8)*Math.exp(-p.launchAge/2.2);
+      const sold=Math.round(base*rnd(0.6,1.3));
+      p.sold+=sold; rev=sold*cfg.price;
+    } else if(id==='tipus'){
+      let s=0; for(const pa of S.partners) if(chance(pa.rel*0.12))s++;
+      s+=chance(0.5)?ri(0,2):0;
+      const sold=Math.round(s*rnd(0.7,1.3)*S.market);
+      p.sold+=sold; rev=sold*cfg.price;
+    } else {
+      const sat=Math.max(0.3,1-p.sold/600);
+      const sold=Math.round((S.rep/8+S.marketing/100000)*sat*rnd(0.5,1.5));
+      p.sold+=sold; rev=sold*cfg.price;
+    }
+    p.revLast=rev;
+    if(rev>0) income(rev,cfg.n+' — havi termékbevétel',true);
+    if(S.vat) S.vatOwed+=rev*0.27/1.27; // bruttóként kezelve
+  }
+}
+function relaunchCourse(){
+  const p=S.products['kurzus']; if(!p||!p.live)return;
+  if(S.cash<250000){toast('Nincs elég pénz a kampányra (250 000 Ft)','warn');return;}
+  expense(250000,'kurzus újraindító kampány');
+  p.launchAge=0;
+  addLog('Kurzus újraindítva friss kampánnyal.','info');
+}
+
+/* ============ HAVI ZÁRÁS / ADÓK ============ */
+function fixedCosts(){
+  if(S.form!=='kft') expense(S.living,'megélhetés — magánkivét (lakhatás, kaja, család)');
+  const acc=[28000,48000,98000][S.accountant]+(S.form==='kft'?42000:0);
+  expense(acc,'könyvelő');
+  expense(S.cadCost,'CAD / szoftverlicencek');
+  let itC=0; for(const cfg of INTERNALS) if(iLive(cfg.id)) itC+=cfg.monthly;
+  if(itC>0) expense(itC,'belső rendszerek üzemeltetése (ERP, AI)');
+  expense(10000,'kamarai tagdíj + továbbképzés (havi rész)');
+  if(S.insurance) expense(S.form==='kft'?46000:24000,'tervezői felelősségbiztosítás');
+  const rent=[0,290000,680000][S.office];
+  if(rent)expense(rent,'irodabérlet + rezsi');
+  expense(15000+S.employees.length*9000,'telefon, adminisztráció, apróságok');
+  if(S.marketing>0)expense(S.marketing,'marketing (hirdetés, honlap, jelenlét)');
+}
+function monthlyClose(){
+  S.counters.months++;
+  // bevétel oldal
+  if(S.form==='mellek'){ S.cash+=S.jobNet; addLog('+'+fmt(S.jobNet)+' — főállású fizetés','ok'); if(S.monthLedger)S.monthLedger.push({t:'főállású fizetés (magán bevétel)',a:S.jobNet,k:'in'}); }
+  productMonthly();
+  fixedCosts();
+  // bérek
+  for(const em of S.employees){
+    const cost=Math.round(em.gross*1.13);
+    expense(cost,'bér + járulék — '+em.name);
+    em.morale=clamp(em.morale+(S.stress>70?-4:1)+(usedHoursWeekly()>weeklyCapacity()?-5:0),0,100);
+  }
+  if(S.form==='kft'){ expense(Math.round(430000),'ügyvezetői minimálbér + járulékok (te)'); }
+  // adó: átalány (EV) — egyszerűsítve havonta
+  const rev=S.monthAcc.rev;
+  if(S.form!=='kft'){
+    const base=rev*0.55;
+    S.yearTaxBase+=base;
+    let szja=0;
+    const freeLimit=3521454;
+    if(S.yearTaxBase>freeLimit){
+      const taxable=Math.min(base,S.yearTaxBase-freeLimit);
+      szja=taxable*0.15;
+    }
+    let jar=base*0.315;
+    if(S.form==='foallas') jar=Math.max(jar,118000); // minimum járulék főállásban
+    let tax=szja+jar;
+    if(S.accountant===2)tax*=0.93;
+    S.taxDue+=tax;
+  } else {
+    const profit=rev-S.monthAcc.cost;
+    if(profit>0) S.taoAcc+=profit*0.09*(S.accountant===2?0.9:1);
+  }
+  // negyedéves adófizetés
+  const c=calDate(S.day);
+  if(c.m%3===0){
+    if(S.taxDue>0){ expense(Math.round(S.taxDue),'negyedéves adó + járulék (átalányadó)'); S.taxDue=0; }
+    if(S.taoAcc>0){ expense(Math.round(S.taoAcc),'társasági adóelőleg (9%)'); S.taoAcc=0; }
+    if(S.vat&&S.vatOwed>0){ expense(Math.round(S.vatOwed),'ÁFA befizetés'); S.vatOwed=0; }
+  }
+  // ÁFA-határ figyelés (AAM 18 M Ft)
+  S.yearRev12.push(rev); if(S.yearRev12.length>12)S.yearRev12.shift();
+  const rev12=S.yearRev12.reduce((a,b)=>a+b,0);
+  if(!S.vat && rev12>18000000){
+    S.vat=true;
+    queueEvent({t:'Átlépted az alanyi ÁFA-mentesség határát',
+      b:'A 12 havi bevételed túllépte a 18 millió forintot, mostantól ÁFA-körbe kerülsz. Céges ügyfeleknek ez mindegy (visszaigénylik), de a lakossági megrendelőknek 27%-kal drágább lettél — az áraidat érdemes újragondolni.',
+      o:[{l:'Rendben, vállaljuk', s:'ÁFA-s számlázás mostantól, negyedéves ÁFA-befizetéssel.', f:()=>{}}]});
+  }
+  // hitel kamatok
+  for(const L of S.loans.list){
+    const int=L.balance*L.rate/12;
+    const pay=Math.min(L.balance+int, L.annuity);
+    expense(Math.round(pay),L.n+' törlesztés');
+    L.balance=Math.max(0,L.balance+int-pay);
+  }
+  if(S.loans.od.used>0){ expense(Math.round(S.loans.od.used*0.055/12),'folyószámlahitel kamat'); }
+  // folyószámlahitel limit frissítés
+  if(S.loans.od.open){ S.loans.od.limit=Math.round(clamp(rev12*0.3,2000000,25000000)); }
+  // történet
+  const profit=S.monthAcc.rev-S.monthAcc.cost;
+  S.hist.push({mk:monthKey(S.day)-1,rev:S.monthAcc.rev,cost:S.monthAcc.cost,prod:S.monthAcc.prodRev,profit,cash:S.cash});
+  if(S.hist.length>48)S.hist.shift();
+  if(typeof buildMonthlyReport==='function') buildMonthlyReport(monthKey(S.day)-1,S.monthAcc.rev,S.monthAcc.cost,profit);
+  // győzelmi feltétel számláló
+  const winNow = S.employees.length>=4 && S.monthAcc.prodRev>=2000000 && S.cash>=30000000 && S.rep>=75;
+  S.winStreak=winNow?S.winStreak+1:0;
+  S.monthAcc={rev:0,cost:0,prodRev:0,tax:0};
+  // évfordulós tételek
+  if(c.m===0){
+    S.inflAcc*=rnd(1.04,1.075);
+    S.cadCost=Math.round(S.cadCost*rnd(1.04,1.1));
+    S.living=Math.round(S.living*rnd(1.04,1.08)/1000)*1000;
+    expense(85000,'éves kamarai jogosultság-megújítás, kötelező továbbképzés');
+    addLog('Új év: az árak és a költségek emelkedtek (infláció).','info');
+  }
+  // piaci ciklus lassú mozgása
+  S.market=clamp(S.market+rnd(-0.06,0.06),0.55,1.5);
+  // partnerek lassú felejtése
+  for(const pa of S.partners) if(chance(0.2)) pa.rel=Math.max(0,pa.rel-0.5);
+  S.partners=S.partners.filter(p=>p.rel>0);
+  // alvállalkozói számlák
+  if(S.subCostMonth>0){ expense(Math.round(S.subCostMonth),'alvállalkozói tervezői díjak'); S.subCostMonth=0; }
+  // alvállalkozó továbbáll?
+  for(let i=S.subs.length-1;i>=0;i--){
+    const quitP=0.08+(S.market>1.1?0.1:0);
+    if(chance(quitP)){ const sb=S.subs.splice(i,1)[0];
+      addLog('Alvállalkozó kiszállt: '+sb.name+' — talált magának nagyobb falatot.','warn'); }
+  }
+  genSubPool();
+  // jelöltek frissítése
+  if(S.candRefresh<=0){ refreshCandidates(); S.candRefresh=2; } else S.candRefresh--;
+}
+
+/* ============ CSŐD / GYŐZELEM ============ */
+function checkSolvency(){
+  let avail=S.cash;
+  if(S.loans.od.open){
+    if(S.cash<0){
+      const need=Math.min(-S.cash,S.loans.od.limit-S.loans.od.used);
+      if(need>0){ S.loans.od.used+=need; S.cash+=need; }
+    } else if(S.loans.od.used>0 && S.cash>0){
+      const back=Math.min(S.cash*0.5,S.loans.od.used);
+      S.loans.od.used-=back; S.cash-=back;
+    }
+    avail=S.cash+(S.loans.od.limit-S.loans.od.used);
+  }
+  if(S.cash<0){
+    S.grace++;
+    if(S.grace===4) toast('Mínuszban a számla! '+(S.loans.od.open?'A hitelkeret is kimerült!':'Nyiss hitelkeretet vagy szerezz bevételt!'),'bad');
+    if(S.grace>14){ S.over=true;
+      queueEvent({t:'CSŐD',b:'Elfogyott a pénz, a számlákat nem tudtad fizetni. A cég fizetésképtelenné vált — a történetnek itt vége. Összesen '+S.counters.done+' projektet zártál le, '+S.counters.months+' hónapig húztad.',
+        o:[{l:'Új játék kezdése',s:'Tiszta lappal, okosabban.',f:()=>{initGame();}}]});
+    }
+  } else S.grace=0;
+}
+function checkWin(){
+  if(S.won)return;
+  if(S.winStreak>=3){
+    S.won=true;
+    queueEvent({t:'🏆 STABIL, PIACVEZETŐ IRODA!',
+      b:'Megcsináltad: legalább 4 fős csapat, 3 hónapja 2 M Ft feletti havi termékbevétel, 40 M Ft feletti tartalék és 75+ hírnév. Az iroda már nélküled is stabilan termel — ez az, amiért az egészet elkezdted. Játszhatsz tovább szabadon.',
+      o:[{l:'Játék folytatása',s:'Építsd tovább birodalmad!',f:()=>{setSpeed(1);}}]});
+  }
+}
+/* ============ ALVÁLLALKOZÓK ============ */
+function genSubPool(){
+  const maxN=clamp(1+Math.floor(S.rep/22),1,4);
+  S.subPool=[];
+  const pool=SUB_NAMES.filter(n=>!S.subs.some(x=>x.name===n));
+  for(let i=0;i<maxN&&pool.length;i++){
+    const name=pool.splice(ri(0,pool.length-1),1)[0];
+    const qual=rnd(0.55,1.0);
+    S.subPool.push({name, rate:Math.round((6500+qual*5500)*S.inflAcc/500)*500, cap:ri(8,20), qual});
+  }
+}
+function hireSub(i){
+  if(S.subs.length>=3){ toast('Háromnál több alvállalkozót nem tudsz koordinálni.','warn'); return; }
+  const sb=S.subPool[i]; if(!sb)return;
+  S.subPool.splice(i,1);
+  S.subs.push({...sb, since:S.day});
+  addLog('Alvállalkozó bevonva: '+sb.name+' ('+fmt(sb.rate)+'/óra, ~'+sb.cap+' óra/hét).','ok');
+}
+function dropSub(i){
+  const sb=S.subs[i]; if(!sb)return;
+  S.subs.splice(i,1);
+  addLog('Alvállalkozói együttműködés lezárva: '+sb.name,'info');
+}
+
+/* ============ BELSŐ FEJLESZTÉSEK ============ */
+function startInternal(id){
+  const cfg=INTERNALS.find(x=>x.id===id);
+  if(!cfg||S.internals[id])return;
+  if(S.cash<cfg.cost){ toast('Ehhez '+fmt(cfg.cost)+' kezdőtőke kell (licencek, eszközök).','warn'); return; }
+  expense(cfg.cost,'belső fejlesztés indítása: '+cfg.n);
+  S.internals[id]={dev:true,live:false,devDone:0};
+  addLog('Belső fejlesztés indult: '+cfg.n+' (~'+cfg.devH+' munkaóra).','info');
+}
+function launchInternal(id){
+  const cfg=INTERNALS.find(x=>x.id===id);
+  const st=S.internals[id];
+  st.dev=false; st.live=true;
+  addLog('BELSŐ RENDSZER ÉLES: '+cfg.n+'! '+cfg.eff,'ok');
+  toast('Elkészült: '+cfg.n,'ok');
+}
+
+/* ============ MUNKATÁRSAK ============ */
+function refreshCandidates(){
+  S.candidates=[];
+  const n=ri(1,3);
+  const pool=EMP_NAMES.filter(nm=>!S.employees.some(e=>e.name===nm));
+  for(let i=0;i<n&&i<pool.length;i++){
+    const lv=pick(EMP_LEVELS.filter(l=> l.id!=='sen'||S.rep>=40 ));
+    S.candidates.push({name:pool.splice(ri(0,pool.length-1),1)[0], lvl:lv.id,
+      gross:Math.round(lv.gross*rnd(0.92,1.15)*S.inflAcc/1000)*1000, eff:lv.eff*rnd(0.9,1.1), lic:lv.lic});
+  }
+}
+function hire(idx){
+  if(S.form!=='kft'){toast('Alkalmazottat csak Kft.-ként vehetsz fel.','warn');return;}
+  if(S.employees.length>=2&&S.office===0){toast('Home office-ban max 2 fő fér el — bérelj irodát!','warn');return;}
+  const c=S.candidates[idx]; if(!c)return;
+  S.candidates.splice(idx,1);
+  S.employees.push({name:c.name,lvl:c.lvl,gross:c.gross,eff:c.eff,lic:c.lic,hired:S.day,morale:70});
+  expense(180000,'toborzás, munkaeszközök — '+c.name);
+  addLog('Felvéve: '+c.name+' ('+EMP_LEVELS.find(l=>l.id===c.lvl).n+')','ok');
+}
+function fire(i){
+  const em=S.employees[i]; if(!em)return;
+  expense(Math.round(em.gross*1.5),'felmondási idő + végkielégítés — '+em.name);
+  S.employees.splice(i,1);
+  S.rep=clamp(S.rep-1,0,100);
+  addLog(em.name+' elköszönt a cégtől.','warn');
+}
+function giveRaise(i){
+  const em=S.employees[i]; if(!em)return;
+  em.gross=Math.round(em.gross*1.12/1000)*1000; em.morale=clamp(em.morale+25,0,100);
+  addLog('Béremelés: '+em.name+' → '+fmt(em.gross)+' bruttó.','info');
+}
+
+/* ============ HITELEK ============ */
+function rev12(){ return S.yearRev12.reduce((a,b)=>a+b,0); }
+function openOverdraft(){
+  if(S.loans.od.open)return;
+  if(S.form==='mellek'){toast('Mellékállású EV-nek a bank nem ad Széchenyi folyószámlahitelt.','warn');return;}
+  if(S.counters.months<12){toast('Legalább 1 lezárt üzleti év kell hozzá.','warn');return;}
+  S.loans.od.open=true;
+  S.loans.od.limit=Math.round(clamp(rev12()*0.3,2000000,25000000));
+  expense(60000,'hitelbírálat, közjegyző, számlanyitás');
+  addLog('Széchenyi folyószámlahitel megnyitva, keret: '+fmt(S.loans.od.limit),'ok');
+}
+function takeLoan(kind){
+  if(kind==='beruh'){
+    if(S.form!=='kft'||S.counters.months<24){toast('Beruházási hitelhez Kft. és 2 lezárt év kell.','warn');return;}
+    const amt=10000000, rate=0.05, months=84;
+    const r=rate/12, ann=amt*r/(1-Math.pow(1+r,-months));
+    S.loans.list.push({n:'Széchenyi beruházási hitel',balance:amt,rate,annuity:ann});
+    S.cash+=amt; addLog('+'+fmt(amt)+' — Széchenyi beruházási hitel folyósítva (5%, 7 év)','ok');
+  } else {
+    if(S.form==='mellek'){toast('Ehhez legalább főállású vállalkozás kell.','warn');return;}
+    const amt=5000000, rate=0.18, months=36;
+    const r=rate/12, ann=amt*r/(1-Math.pow(1+r,-months));
+    S.loans.list.push({n:'Piaci gyorshitel',balance:amt,rate,annuity:ann});
+    S.cash+=amt; addLog('+'+fmt(amt)+' — piaci gyorshitel (18%!, 3 év). Drága mulatság.','warn');
+  }
+}
+
+/* ============ CÉGFORMA ============ */
+function milestoneDayClose(){ S.todayFree=0; if(!S.over) advanceDay(); }
+function goFullTime(){
+  if(S.form!=='mellek')return;
+  queueEvent({t:'Felmondasz a főállásodban?',
+    b:'Elveszíted a havi '+fmt(S.jobNet)+' biztos fizetést, cserébe heti 46 órád lesz a saját irodádra a 20 helyett, több ajánlatkérés jön, és nagyobb munkákat is bevállalhatsz. Főállású EV-ként viszont akkor is fizeted a minimum járulékot (~118 000 Ft/hó), ha épp nincs bevétel.',
+    o:[
+      {l:'Felmondok — irány a saját iroda!',s:'Nincs több biztonsági háló. A mai napod ezzel el is megy (papírmunka, átadás).',f:()=>{S.form='foallas'; S.stress=clamp(S.stress-15,0,100); addLog('FŐÁLLÁSÚ VÁLLALKOZÓ lettél. Most már nincs visszaút.','ok'); toast('Főállású vállalkozó vagy!','ok'); milestoneDayClose();}},
+      {l:'Még nem, maradok mellékállásban',s:'A biztos fizetés is ér valamit.',f:()=>{}}
+    ]});
+  if(typeof showNextEvent==='function') showNextEvent();
+}
+function foundKft(){
+  if(S.form!=='foallas')return;
+  if(S.cash<3600000){toast('Kb. 3,6 M Ft kell: 3 M törzstőke + ügyvéd, illetékek.','warn');return;}
+  queueEvent({t:'Kft. alapítása',
+    b:'A Kft. megnyitja az utat: alkalmazottak, nagy projektek, közbeszerzés, beruházási hitel. Cserébe: 3 M Ft törzstőke lekötése az induláskor, drágább könyvelés, kötelező ügyvezetői bér (~430 000 Ft/hó költség), 9% társasági adó. Az átalányadós egyszerűségnek vége.',
+    o:[
+      {l:'Alapítsuk meg!',s:'− 600 000 Ft alapítási költség, a törzstőke a cégben marad. A mai nap ráment az ügyintézésre.',f:()=>{expense(600000,'Kft. alapítás: ügyvéd, illeték, banki költségek'); S.form='kft'; S.vat=true; addLog('Megalakult a Kft.! Mostantól ÁFA-körös, építhetsz csapatot.','ok'); toast('Kft. megalapítva!','ok'); refreshCandidates(); milestoneDayClose();}},
+      {l:'Még várok vele',s:'',f:()=>{}}
+    ]});
+  if(typeof showNextEvent==='function') showNextEvent();
+}
+
+/* ============ ESEMÉNYEK ============ */
+function queueEvent(ev){ if(S.evQ.some(e=>e.t===ev.t)||(typeof window!=='undefined'&&modalOpen&&window._ev&&window._ev.t===ev.t))return; S.evQ.push(ev); }
+function fireRandomEvent(){
+  const evs=[];
+  const openKiv=S.invoices.filter(i=>i.status==='open'&&(i.cl==='kivitelezo'||i.cl==='beruhazo'));
+  if(openKiv.length&&chance(0.5)){
+    const inv=pick(openKiv);
+    evs.push({t:'Rossz hírek a kivitelezőtől',
+      b:inv.name+' pénzügyi gondokkal küzd — a piacon körbetartozási hullám megy. A '+fmt(inv.gross)+' összegű számlád kifizetése kérdéses. Mit lépsz?',
+      o:[
+        {l:'Fizetési egyezség: 70% most',s:'Biztos pénz, de 30% bukó.',f:()=>{inv.status='paid'; income(inv.gross*0.7,'egyezség — '+inv.name); addLog('30% elengedve az egyezségért.','warn');}},
+        {l:'Kivárod / fizetési meghagyás',s:'Vagy megjön az egész, vagy semmi.',f:()=>{ if(chance(0.5)){ inv.due=S.day+ri(20,50); addLog('Ígéret van a teljes fizetésre, várunk.','info'); } else { inv.status='default'; S.counters.defaults++; addLog('NEM FIZETETT: '+inv.name+' felszámolás alá került. '+fmt(inv.gross)+' odalett.','bad'); toast('Behajthatatlan: '+inv.name,'bad'); } }}
+      ]});
+  }
+  evs.push({t:'Olcsó konkurens jelent meg',
+    b:'Egy új „tervezőiroda" (valójában egy nyugdíjas mérnök meg egy AutoCAD) fele áron ígér gépészterveket a környéken. Az ügyfelek egy része árra megy.',
+    o:[{l:'Tudomásul veszed',s:'2 hónapig nehezebb lesz nyerni.',f:()=>{S.mods.push({type:'winp',mag:-0.12,until:S.day+60,n:'Árverseny (olcsó konkurens)'});}},
+       {l:'Minőségi kampányba kezdesz (−300 000 Ft)',s:'Referenciák, esettanulmányok — hírnév +4.',f:()=>{expense(300000,'minőségi marketingkampány'); S.rep=clamp(S.rep+4,0,100); S.mods.push({type:'winp',mag:-0.05,until:S.day+60,n:'Árverseny (tompítva)'});}}]});
+  evs.push({t:'Otthonteremtési program pörgeti a piacot',
+    b:'Az új támogatott lakáshitel beindította a családiház-építéseket. Az építészek tervezőket keresnek — dömping várható.',
+    o:[{l:'Nagyszerű!',s:'3 hónapig több ajánlatkérés érkezik.',f:()=>{S.mods.push({type:'leads',mag:1.5,until:S.day+90,n:'Lakáspiaci boom'});}}]});
+  evs.push({t:'Építőipari lassulás',
+    b:'A magas kamatok és a bizonytalanság miatt a beruházások megtorpantak. A tervezői piacon is kevesebb a munka, és mindenki az árakat nyomja lefelé.',
+    o:[{l:'Átvészeljük',s:'4 hónapig kevesebb megkeresés, alacsonyabb árak.',f:()=>{S.mods.push({type:'leads',mag:0.6,until:S.day+120,n:'Piaci lassulás'}); S.mods.push({type:'price',mag:0.9,until:S.day+120,n:'Árnyomás'});}}]});
+  if(S.accountant===0) evs.push({t:'NAV-ellenőrzés',
+    b:'Adóellenőrzést kaptál. Az olcsó könyvelőd sajnos elcsúszott pár bevalláson — hiányosságokat találtak.',
+    o:[{l:'Bírság + önellenőrzés',s:'',f:()=>{const f=ri(300,1100)*1000; expense(f,'NAV bírság és pótlék'); toast('NAV bírság: '+fmt(f),'bad');}}]});
+  else evs.push({t:'NAV-ellenőrzés',
+    b:'Adóellenőrzést kaptál, de a könyvelőd rendben tartotta a papírokat. Néhány idegőrlő hét után mindent rendben találtak.',
+    o:[{l:'Megkönnyebbülés',s:'',f:()=>{addLog('NAV-ellenőrzés lezárva, hiba nélkül.','ok');}}]});
+  if(S.counters.done>4) evs.push({t:'Reklamáció: hiba a tervben',
+    b:'Az egyik korábbi projektnél a kivitelező szerint alulméretezett a strang, átépítés kell. A megrendelő a tervezőn — rajtad — keresi a kárt: '+fmt(ri(4,9)*100000)+' nagyságrendben.'+(S.insurance?' Szerencsére van felelősségbiztosításod.':' Nincs felelősségbiztosításod...'),
+    o: S.insurance?
+      [{l:'Biztosító intézi',s:'Önrész 100 000 Ft, hírnév −2.',f:()=>{expense(100000,'biztosítási önrész (tervhiba)'); S.rep=clamp(S.rep-2,0,100);}}]:
+      [{l:'Kifizeted a kárt',s:'Hírnév −3.',f:()=>{expense(ri(4,9)*100000,'tervezői hiba kártérítése'); S.rep=clamp(S.rep-3,0,100);}},
+       {l:'Vitatod, ügyvédhez mész',s:'50% eséllyel megúszod, de ha vesztesz: dupla kár + hírnév −8.',f:()=>{expense(250000,'ügyvédi költség'); if(chance(0.5)){addLog('A szakértő neked adott igazat!','ok');} else {expense(ri(8,16)*100000,'pervesztés: kártérítés'); S.rep=clamp(S.rep-8,0,100); toast('Elvesztetted a vitát.','bad');}}}]});
+  if(S.form==='mellek' && rev12()>4000000) evs.push({t:'A főnököd gyanakszik',
+    b:'Feltűnt neki, hogy fáradtan jársz be, és látott egy általad pecsételt tervet egy ismerős beruházásán. Behívott „beszélgetni".',
+    o:[
+      {l:'Visszafogod a vállalkozást',s:'2 hónapig fele annyi megkeresést vállalsz be.',f:()=>{S.mods.push({type:'leads',mag:0.5,until:S.day+60,n:'Lapítás a főnök előtt'});}},
+      {l:'Bevallod és felmondasz',s:'Irány a főállású vállalkozás!',f:()=>{S.form='foallas'; addLog('Felmondtál — főállású vállalkozó lettél.','ok');}},
+      {l:'Kockáztatsz és tagadsz',s:'25% eséllyel kirúgnak azonnal.',f:()=>{ if(chance(0.25)){ S.form='foallas'; addLog('Kirúgtak a főállásodból. Hát, így lettél főállású vállalkozó...','bad'); toast('Kirúgtak — kényszer-főállás!','bad'); } else addLog('Megúsztad, de a főnök figyel.','warn'); }}
+    ]});
+  if(S.employees.length>0){ const em=pick(S.employees);
+    evs.push({t:'Fejvadász környékezi '+em.name+'-t',
+      b:'Egy multi tervezőiroda 25%-kal többet kínál neki. '+(em.morale>70?'Szereti a csapatot, de a pénz beszél.':'Amúgy sincs túl jó kedve mostanában.'),
+      o:[
+        {l:'Béremelés (+12%)',s:'Marad, morál nő.',f:()=>{giveRaise(S.employees.indexOf(em));}},
+        {l:'Elengeded',s:(em.morale>60?'40%':'75%')+' eséllyel felmond.',f:()=>{ if(chance(em.morale>60?0.4:0.75)){ S.employees.splice(S.employees.indexOf(em),1); addLog(em.name+' felmondott, átment a konkurenciához.','bad'); toast(em.name+' elment.','bad'); } else addLog(em.name+' végül maradt.','ok'); }}
+      ]});
+  }
+  if(S.subs.length){
+    const sb=pick(S.subs);
+    evs.push({t:'Az alvállalkozód cserben hagyott',
+      b:sb.name+' napok óta nem veszi fel a telefont — közben határidős munkája van nálad. Végül kiderül: elvállalt egy nagyobb megbízást másnál, a tiéd „csúszik".',
+      o:[
+        {l:'Gyorsan keresel helyette mást (−150 000 Ft)',s:'Sürgősségi felár, a projekt +8 óra.',f:()=>{expense(150000,'sürgősségi alvállalkozó-csere'); const tp=S.projects.length?pick(S.projects):null; if(tp)tp.hLeft+=8; const j=S.subs.indexOf(sb); if(j>=0)S.subs.splice(j,1);}},
+        {l:'Befejezed magad, éjszakázva',s:'Stressz +15, a kapcsolatnak vége.',f:()=>{S.stress=clamp(S.stress+15,0,100); const j=S.subs.indexOf(sb); if(j>=0)S.subs.splice(j,1);}}
+      ]});
+    evs.push({t:'Alvállalkozói áremelés',
+      b:sb.name+' jelezte: mostantól 15%-kal magasabb óradíjjal dolgozik — „mindenki ennyit kér már a piacon".',
+      o:[
+        {l:'Elfogadod',s:'Marad, drágábban.',f:()=>{sb.rate=Math.round(sb.rate*1.15/500)*500; addLog(sb.name+' új óradíja: '+fmt(sb.rate)+'/óra.','warn');}},
+        {l:'Elengeded',s:'Kapacitást veszítesz.',f:()=>{const j=S.subs.indexOf(sb); if(j>=0)S.subs.splice(j,1);}}
+      ]});
+  }
+  evs.push({t:'Szakmai megjelenés',
+    b:'Egy gépészeti szaklap interjút kér az egyik érdekes projektedről, és egy építész-meetupra is meghívtak előadni.',
+    o:[{l:'Vállalod (1 hét munkaidő rovására)',s:'Hírnév +4, új kapcsolatok.',f:()=>{S.rep=clamp(S.rep+4,0,100); if(chance(0.6))bumpPartner(pick(ARCH_NAMES),1); addLog('Megjelent az interjú — többen ismernek.','ok');}},
+       {l:'Nincs rá időd',s:'',f:()=>{}}]});
+  evs.push({t:'Szoftverlicenc-áremelés',
+    b:'A CAD-szolgáltatód „az innováció jegyében" 18%-ot emel. Válthatnál olcsóbb hazai szoftverre, de az átállás időbe kerül.',
+    o:[{l:'Fizeted az emelést',s:'',f:()=>{S.cadCost=Math.round(S.cadCost*1.18);}},
+       {l:'Átállsz olcsóbbra',s:'−80 000 Ft átállás, 3 hétig −15% hatékonyság, utána −30% licencdíj.',f:()=>{expense(80000,'szoftverváltás, migráció'); S.cadCost=Math.round(S.cadCost*0.7); S.sickUntil=Math.max(S.sickUntil,S.day+8);}}]});
+  if(S.partners.length) { const pa=pick(S.partners);
+    evs.push({t:pa.name+' ajánlott téged',
+      b:'Az egyik elégedett építész partnered továbbadta a nevedet a szakmában. Ez aranyat ér.',
+      o:[{l:'Köszönöd szépen',s:'Hírnév +3, kapcsolat erősödik.',f:()=>{S.rep=clamp(S.rep+3,0,100); bumpPartner(pa.name,1);}}]});
+  }
+  queueEvent(pick(evs));
+}
+
+/* ============ MODOK LEJÁRATA ============ */
+function processMods(){ S.mods=S.mods.filter(m=>m.until>S.day); }
+/* ============ UI ============ */
+const TABS=[
+ {id:'day',n:'Mai nap'},{id:'over',n:'Áttekintés'},{id:'leads',n:'Ajánlatkérések'},{id:'proj',n:'Projektek'},
+ {id:'fin',n:'Pénzügyek'},{id:'prod',n:'Termékek'},{id:'team',n:'Csapat'},
+ {id:'net',n:'Kapcsolatok'},{id:'ceg',n:'Cég'},{id:'log',n:'Napló'}
+];
+let curTab='day', uiPrices={}, dragging=false, modalOpen=false;
+document.addEventListener('pointerdown',e=>{ if(e.target&&e.target.type==='range')dragging=true; });
+document.addEventListener('pointerup',()=>{dragging=false;});
+
+function stageName(){ return S.form==='mellek'?'Mellékállású EV (átalányadó)':S.form==='foallas'?'Főállású egyéni vállalkozó':'Kft. ügyvezető'; }
+function starStr(r){ return '★'.repeat(Math.round(r))+'☆'.repeat(5-Math.round(r)); }
+
+function renderHeader(){
+  document.getElementById('hDate').textContent=dateStr(S.day)+' · '+HDOW[dow(S.day)];
+  const hf=document.getElementById('hFree'); if(hf)hf.textContent='ma szabad: '+S.todayFree+' óra';
+  const hc=document.getElementById('hCash');
+  hc.textContent=fmt(S.cash); hc.className='cash'+(S.cash<0?' neg':'');
+  document.getElementById('hStage').textContent=stageName();
+}
+function lastProfit(){ return S.hist.length?S.hist[S.hist.length-1].profit:0; }
+function renderKpis(){
+  const backlog=S.projects.reduce((a,p)=>a+p.hLeft,0);
+  const cap=weeklyCapacity();
+  const util=backlog>0?Math.min(999,Math.round(backlog/cap*10)/10):0;
+  const lp=lastProfit();
+  const prodR=S.hist.length?S.hist[S.hist.length-1].prod:0;
+  const k=[
+   {l:'Készpénz',v:fmtS(S.cash),c:S.cash<0?'bad':S.cash<500000?'warn':'',s:S.loans.od.open?('keret: '+fmtS(S.loans.od.limit-S.loans.od.used)):''},
+   {l:'Kintlévőség',v:fmtS(arTotal()),c:'',s:S.invoices.filter(i=>i.status==='open'&&i.late).length+' késésben'},
+   {l:'Előző havi eredmény',v:fmtS(lp),c:lp>=0?'ok':'bad',s:''},
+   {l:'Termékbevétel / hó',v:fmtS(prodR),c:prodR>0?'ok':'',s:'cél: 2,0 M Ft'},
+   {l:'Hírnév',v:Math.round(S.rep)+' / 100',c:S.rep>=60?'ok':'',s:''},
+   {l:'Munkahátralék',v:util+' hét',c:util>3?'warn':'',s:cap.toFixed(0)+' h/hét kapacitás'},
+   {l:'Stressz',v:Math.round(S.stress)+'%',c:S.stress>75?'bad':S.stress>50?'warn':'',s:S.day<S.sickUntil?'BETEGÁLLOMÁNY':''}
+  ];
+  document.getElementById('kpis').innerHTML=k.map(x=>'<div class="kpi"><div class="l">'+x.l+'</div><div class="v '+x.c+'">'+x.v+'</div><div class="s">'+(x.s||'&nbsp;')+'</div></div>').join('');
+}
+function renderTabs(){
+  document.getElementById('tabs').innerHTML=TABS.map(t=>{
+    let b='';
+    if(t.id==='leads'&&S.leads.length)b='<span class="badge">'+S.leads.length+'</span>';
+    if(t.id==='proj'&&S.projects.length)b='<span class="badge blue">'+S.projects.length+'</span>';
+    return '<button class="'+(curTab===t.id?'on':'')+'" onclick="switchTab(\''+t.id+'\')">'+t.n+b+'</button>';
+  }).join('');
+}
+function switchTab(id){ curTab=id; renderTabs(); renderPanel(); }
+
+function renderPanel(){
+  if(dragging)return;
+  const m=document.getElementById('main');
+  if(curTab==='day')m.innerHTML=pDay();
+  else if(curTab==='over')m.innerHTML=pOver();
+  else if(curTab==='leads')m.innerHTML=pLeads();
+  else if(curTab==='proj')m.innerHTML=pProj();
+  else if(curTab==='fin')m.innerHTML=pFin();
+  else if(curTab==='prod')m.innerHTML=pProd();
+  else if(curTab==='team')m.innerHTML=pTeam();
+  else if(curTab==='net')m.innerHTML=pNet();
+  else if(curTab==='ceg')m.innerHTML=pCeg();
+  else m.innerHTML=pLog();
+  if(curTab==='over')drawChart();
+}
+
+/* --- Áttekintés --- */
+function pOver(){
+  const goal=[
+   {t:'Legalább 4 alkalmazott', ok:S.employees.length>=4, v:S.employees.length+' fő'},
+   {t:'Havi termékbevétel ≥ 2 M Ft', ok:(S.hist.length?S.hist[S.hist.length-1].prod:0)>=2000000, v:fmtS(S.hist.length?S.hist[S.hist.length-1].prod:0)},
+   {t:'Készpénz ≥ 30 M Ft', ok:S.cash>=30000000, v:fmtS(S.cash)},
+   {t:'Hírnév ≥ 75', ok:S.rep>=75, v:Math.round(S.rep)},
+   {t:'Mindez 3 egymást követő hónapban', ok:S.winStreak>=3, v:S.winStreak+' / 3 hónap'}
+  ];
+  let mods=S.mods.length?S.mods.map(m=>'<span class="tag '+(m.mag<1&&m.type!=='winp'||m.mag<0?'red':'green')+'">'+m.n+' ('+Math.max(0,m.until-S.day)+' nap)</span>').join(' '):'<span class="mut">nincs aktív piaci hatás</span>';
+  const mk=S.market;
+  return '<div class="grid2"><div>'
+   +'<div class="card"><h3>Készpénz alakulása (utolsó 12 hónap)<span class="r mut">piaci hangulat: '+(mk>1.15?'erős 📈':mk<0.8?'gyenge 📉':'átlagos')+'</span></h3><canvas id="chart" width="640" height="190"></canvas></div>'
+   +'<div class="card"><h3>Havi eredmények</h3>'+plTable(6)+'</div>'
+   +'</div><div>'
+   +'<div class="card"><h3>Cél: stabil, piacvezető iroda</h3>'+goal.map(g=>'<div class="row"><span>'+(g.ok?'✅':'⬜')+' '+g.t+'</span><b class="'+(g.ok?'win':'mut')+'">'+g.v+'</b></div>').join('')+'<div class="help">A győzelemhez mind az öt feltételnek egyszerre kell teljesülnie. Addig is: túlélni, számlázni, behajtani.</div></div>'
+   +'<div class="card"><h3>Aktív piaci hatások</h3>'+mods+'</div>'
+   +'<div class="card"><h3>Gyors helyzetkép</h3>'
+   +'<div class="row"><span class="m">Cégforma</span><b>'+stageName()+'</b></div>'
+   +'<div class="row"><span class="m">ÁFA-státusz</span><b>'+(S.vat?'ÁFA-körös (27%)':'alanyi mentes (18 M Ft-ig)')+'</b></div>'
+   +'<div class="row"><span class="m">12 havi árbevétel</span><b>'+fmtS(rev12())+'</b></div>'
+   +'<div class="row"><span class="m">Lezárt projektek</span><b>'+S.counters.done+' db ('+S.counters.won+' nyert / '+S.counters.lost+' elbukott ajánlat)</b></div>'
+   +'<div class="row"><span class="m">Behajthatatlan követelés</span><b>'+S.counters.defaults+' eset</b></div>'
+   +'</div></div></div>';
+}
+function plTable(n){
+  const rows=S.hist.slice(-n).reverse();
+  if(!rows.length)return '<div class="mut">Még nincs lezárt hónap.</div>';
+  return '<table><tr><th>Hónap</th><th class="r">Bevétel</th><th class="r">Ebből termék</th><th class="r">Költség</th><th class="r">Eredmény</th></tr>'
+   +rows.map(h=>{const y=Math.floor(h.mk/12),mo=h.mk%12;return '<tr><td>'+y+'. '+HMON[mo].slice(0,3)+'</td><td class="r">'+fmtS(h.rev)+'</td><td class="r">'+fmtS(h.prod)+'</td><td class="r">'+fmtS(h.cost)+'</td><td class="r" style="color:'+(h.profit>=0?'var(--ok)':'var(--bad)')+'">'+fmtS(h.profit)+'</td></tr>';}).join('')+'</table>';
+}
+function cashProjection(days){
+  const inflow={};
+  for(const inv of S.invoices) if(inv.status==='open'){
+    const d=Math.max(1,inv.due-S.day); inflow[d]=(inflow[d]||0)+inv.gross;
+  }
+  for(const p of S.projects){
+    const done=Math.max(1,p.deadline-S.day);
+    const payD=done+CLIENTS[p.cl].terms;
+    if(payD<=days) inflow[payD]=(inflow[payD]||0)+estRemainingBill(p)*(S.vat?1.27:1);
+  }
+  const fixT=fixedRows().reduce((a,r)=>a+r[1],0);
+  const prodAvg=S.hist.length?S.hist.slice(-3).reduce((a,x)=>a+x.prod,0)/Math.min(3,S.hist.length):0;
+  const daily=-fixT/30+prodAvg/30+(S.form==='mellek'?S.jobNet/30:0);
+  // következő negyedéves adófizetés napja
+  let taxDay=null; const c0=calDate(S.day);
+  for(let d=1;d<=days;d++){ const c=calDate(S.day+d); if(c.d===1&&c.m%3===0){ taxDay=d; break; } }
+  const out=[]; let c=S.cash;
+  for(let d=1;d<=days;d++){
+    c+=daily+(inflow[d]||0);
+    if(d===taxDay) c-=(S.taxDue+S.taoAcc+(S.vat?S.vatOwed:0));
+    out.push(Math.round(c));
+  }
+  return out;
+}
+function drawChart(){
+  const cv=document.getElementById('chart'); if(!cv)return;
+  const ctx=cv.getContext('2d');
+  const data=(S.cashSeries||[]).slice(-300);
+  const fut=iLive('erp')?cashProjection(60):[];
+  ctx.clearRect(0,0,cv.width,cv.height);
+  if(data.length<2)return;
+  const all=data.concat(fut);
+  const min=Math.min(0,...all), max=Math.max(1000000,...all);
+  const W=cv.width,H=cv.height,pad=6,n=all.length;
+  const x=i=>pad+i/(n-1)*(W-2*pad);
+  const y=v=>H-pad-(v-min)/(max-min)*(H-2*pad);
+  ctx.strokeStyle='#c9d2da'; ctx.setLineDash([4,4]); ctx.beginPath(); ctx.moveTo(pad,y(0)); ctx.lineTo(W-pad,y(0)); ctx.stroke(); ctx.setLineDash([]);
+  ctx.strokeStyle='#0e7a8a'; ctx.lineWidth=2; ctx.beginPath();
+  data.forEach((v,i)=>{ i?ctx.lineTo(x(i),y(v)):ctx.moveTo(x(i),y(v)); });
+  ctx.stroke();
+  if(fut.length){
+    ctx.strokeStyle='#b96a00'; ctx.lineWidth=2; ctx.setLineDash([5,4]); ctx.beginPath();
+    ctx.moveTo(x(data.length-1),y(data[data.length-1]));
+    fut.forEach((v,i)=>ctx.lineTo(x(data.length+i),y(v)));
+    ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle='#b96a00'; ctx.font='11px sans-serif';
+    ctx.fillText('ERP előrejelzés (ha mindenki időben fizet)',x(data.length-1)-160,H-8);
+  }
+  ctx.fillStyle='#5c6b7a'; ctx.font='11px sans-serif';
+  ctx.fillText(fmtS(max),pad+2,12); ctx.fillText(fmtS(min),pad+2,H-8);
+}
+
+/* --- Ajánlatkérések --- */
+function chanceLabel(l,price){
+  const c=CLIENTS[l.cl];
+  let eff=price/l.estRef; if(S.vat&&l.cl==='magan')eff*=1.14;
+  let p=1.55-1.25*eff*Math.pow(c.priceSens,0.6)+S.rep/100*0.22+l.partner*0.05;
+  for(const m of S.mods) if(m.type==='winp')p+=m.mag;
+  if(S.form==='mellek'&&l.estRef>400000)p-=0.08;
+  p=clamp(p,0.03,0.93);
+  if(l.tender)return['?','A tenderen az ár dönt — a becsült keret alá kell menni.'];
+  if(p<0.2)return['Alacsony esély','#b3362c'];
+  if(p<0.42)return['Közepes esély','#b96a00'];
+  if(p<0.65)return['Jó esély','#1a7f4e'];
+  return['Nagyon jó esély','#1a7f4e'];
+}
+function aiBest(l){
+  if(!l.aiRef) l.aiRef=l.trueRef*rnd(0.97,1.03);
+  if(l.tender){ return {price:Math.round(l.aiRef*0.80/1000)*1000, p:0.62, t:'a várható legalacsonyabb rivális ajánlat alá lő'}; }
+  const c=CLIENTS[l.cl];
+  let best={price:l.aiRef,ev:0,p:0};
+  for(let r=0.6;r<=1.6;r+=0.02){
+    const price=l.aiRef*r;
+    let eff=price/l.aiRef; if(S.vat&&l.cl==='magan')eff*=1.14;
+    let p=1.55-1.25*eff*Math.pow(c.priceSens,0.6)+S.rep/100*0.22+l.partner*0.05;
+    for(const m of S.mods) if(m.type==='winp')p+=m.mag;
+    if(S.form==='mellek'&&l.aiRef>400000)p-=0.08;
+    p=clamp(p,0.03,0.93);
+    const ev=p*price;
+    if(ev>best.ev)best={price:Math.round(price/1000)*1000,ev,p};
+  }
+  best.t='a legjobb ár × esély kombináció';
+  return best;
+}
+function applyAiPrice(key,price){ uiPrices[key]=price; renderPanel(); }
+function aiAdviceRow(l,key){
+  const b=aiBest(l);
+  return '<div class="row" style="margin-top:6px;background:#e9f5ee;border-radius:6px;padding:5px 8px"><span><span class="tag green">AI piackutató</span> javasolt ár: <b>'+fmt(b.price)+'</b> <span class="mut">(~'+Math.round(b.p*100)+'% esély — '+b.t+')</span></span><button class="btn small sec" onclick="applyAiPrice(\''+key+'\','+b.price+')">Alkalmaz</button></div>';
+}
+function pLeads(){
+  let h='<div class="card"><h3>Beérkezett ajánlatkérések <span class="r mut">a hírnév, a marketing és a kapcsolatok hozzák a megkereséseket</span></h3>';
+  if(!S.leads.length)h+='<div class="mut">Most éppen csend van. A marketingre költés és az építész kapcsolatok gyorsítják a megkereséseket.</div>';
+  for(const l of S.leads){
+    const key='p'+l.id;
+    if(!(key in uiPrices))uiPrices[key]=Math.round(l.estRef);
+    const price=uiPrices[key];
+    const ch=chanceLabel(l,price);
+    const slots=S.projects.length>=signerSlots();
+    h+='<div class="lead"><div class="t">'+l.tn+'</div>'
+     +'<div class="meta"><span class="tag">'+CLIENTS[l.cl].n+'</span><span><b>'+l.name+'</b></span>'
+     +(l.partner?'<span class="tag gold">partner '+starStr(l.partner)+'</span>':'')
+     +(l.tender?'<span class="tag red">tender — '+l.bidders+' induló</span>':'')+'</div>'
+     +'<div class="d">'+l.desc+'</div>'
+     +'<div class="meta"><span>Becsült piaci ár: <b>'+fmt(Math.round(l.estRef/1000)*1000)+'</b>'+(S.vat?' <span class="mut">+ÁFA</span>':'')+'</span>'
+     +'<span>Munkaigény: <b>~'+l.hours+' óra</b></span>'
+     +'<span>Határidő: <b>'+l.dl+' nap</b></span>'
+     +'<span>Ajánlat beadható még: <b>'+Math.max(0,l.expires-S.day)+' napig</b></span></div>'
+     +'<div class="quote"><div class="pr"><span>Ajánlati árad:</span><b>'+fmt(price)+'</b><span style="color:'+(ch[1][0]==='#'?ch[1]:'var(--muted)')+';font-weight:700">'+ch[0]+'</span></div>'
+     +'<input type="range" min="'+Math.round(l.estRef*0.55)+'" max="'+Math.round(l.estRef*1.7)+'" step="1000" value="'+price+'" oninput="uiPrices[\''+key+'\']=+this.value; this.parentElement.querySelector(\'b\').textContent=fmt(+this.value); "  onchange="renderPanel()">'
+     +(iLive('aipiac')?aiAdviceRow(l,key):'')
+     +'<div style="margin-top:8px; display:flex; gap:8px;">'
+     +'<button class="btn" '+((slots||S.todayFree<quoteCost(l))?'disabled':'')+' onclick="submitQuote('+l.id+',uiPrices[\''+key+'\']);renderAll()">Ajánlat beadása ('+quoteCost(l)+' óra)</button>'
+     +'<button class="btn sec small" onclick="declineLead('+l.id+')">Nem érdekel</button>'
+     +(slots?'<span class="mut" style="align-self:center">Nincs szabad aláírói kapacitásod ('+signerSlots()+' párhuzamos projekt) — senior tervező bővíti.</span>':(S.todayFree<quoteCost(l)?'<span class="mut" style="align-self:center">Mára elfogyott az időd (' +quoteCost(l)+' óra kellene) — zárd le a napot.</span>':''))
+     +'</div></div></div>';
+  }
+  h+='</div>';
+  if(S.quotes.length){
+    h+='<div class="card"><h3>Elbírálás alatt lévő ajánlatok</h3>'+S.quotes.map(q=>'<div class="row"><span>'+q.tn+' — '+q.name+'</span><b>'+fmt(q.price)+'</b><span class="mut">döntés ~'+Math.max(0,q.resolve-S.day)+' nap</span></div>').join('')+'</div>';
+  }
+  return h;
+}
+function declineLead(id){ const i=S.leads.findIndex(l=>l.id===id); if(i>=0){S.leads.splice(i,1); renderPanel(); renderTabs();} }
+
+/* --- Projektek --- */
+function pProj(){
+  let h='<div class="card"><h3>Futó projektek <span class="r mut">kapacitás: '+weeklyCapacity().toFixed(0)+' óra/hét'+(S.day<S.sickUntil?' — BETEG VAGY':'')+'</span></h3>';
+  if(!S.projects.length)h+='<div class="mut">Nincs futó projekt. Ajánlatot az „Ajánlatkérések" fülön adhatsz be.</div>';
+  for(const p of S.projects.slice().sort((a,b)=>a.deadline-b.deadline)){
+    const done=1-p.hLeft/p.hTot;
+    const dl=p.deadline-S.day;
+    const cls=dl<0?'bad':dl<7?'warn':'';
+    let erpRow='';
+    if(iLive('erp')){
+      const fixT=fixedRows().reduce((a,r)=>a+r[1],0);
+      const hc=fixT/(weeklyCapacity()*4.33);
+      const spent=(p.hTot-p.hLeft)*hc, margin=p.price-p.hTot*hc;
+      erpRow='<div class="row"><span class="tag">ERP</span><span class="m">ráfordítás eddig: <b>'+fmtS(spent)+'</b> · önköltség: <b>'+fmtS(p.hTot*hc)+'</b> · várható fedezet: <b style="color:'+(margin>=0?'var(--ok)':'var(--bad)')+'">'+fmtS(margin)+'</b></span></div>';
+    }
+    h+='<div class="proj"><div class="row"><b>'+p.tn+'</b><span>'+fmt(p.price)+'</span></div>'
+     +'<div class="row"><span class="m">'+p.name+' · '+CLIENTS[p.cl].n+'</span>'
+     +'<span class="'+(cls?'':'m')+'" style="'+(cls==='bad'?'color:var(--bad);font-weight:700':cls==='warn'?'color:var(--warn);font-weight:700':'')+'">'+(dl<0?Math.abs(dl)+' napja LEJÁRT (kötbér vár!)':'határidő: '+dl+' nap')+'</span></div>'
+     +'<div class="bar"><i class="'+(cls||'')+'" style="width:'+Math.round(done*100)+'%"></i></div>'
+     +'<div class="row"><span class="m">'+Math.round(done*100)+'% kész · hátravan ~'+Math.ceil(p.hLeft)+' óra</span>'+(p.rework?'<span class="tag red">áttervezés volt</span>':'')+'</div>'+erpRow+'</div>';
+  }
+  h+='<div class="help">A munkaórák automatikusan a legszorosabb határidejű projektre mennek. Ha a hátralék több hétre rúg, ne vállalj be mindent — a kötbér és a hírnévvesztés drága.</div></div>';
+  return h;
+}
+
+/* --- Pénzügyek --- */
+function fixedRows(){
+  const rows=[];
+  if(S.form!=='kft') rows.push(['Megélhetés (magánkivét)',S.living]);
+  else rows.push(['Ügyvezetői bér + járulék (ebből élsz)',430000]);
+  rows.push(['Könyvelő',[28000,48000,98000][S.accountant]+(S.form==='kft'?42000:0)]);
+  rows.push(['CAD / szoftverlicencek',S.cadCost]);
+  rows.push(['Kamarai tagdíj, továbbképzés',10000]);
+  if(S.insurance) rows.push(['Felelősségbiztosítás',S.form==='kft'?46000:24000]);
+  if(S.office) rows.push(['Irodabérlet + rezsi',[0,290000,680000][S.office]]);
+  rows.push(['Telefon, adminisztráció',15000+S.employees.length*9000]);
+  if(S.marketing) rows.push(['Marketing',S.marketing]);
+  for(const em of S.employees) rows.push(['Bér — '+em.name,Math.round(em.gross*1.13)]);
+  const saas=S.products['saas'];
+  if(saas&&saas.live) rows.push(['Szerver, üzemeltetés (GépészCalc)',35000]);
+  let itC=0; for(const cfg of INTERNALS) if(iLive(cfg.id)) itC+=cfg.monthly;
+  if(itC>0) rows.push(['Belső rendszerek (ERP, AI)',itC]);
+  for(const L of S.loans.list) rows.push([L.n+' törlesztés',Math.round(L.annuity)]);
+  if(S.form==='foallas') rows.push(['Minimum járulék (az adóval együtt fizeted)',118000]);
+  return rows;
+}
+function fixedCard(){
+  const rows=fixedRows();
+  const tot=rows.reduce((a,r)=>a+r[1],0);
+  let h='<div class="card"><h3>Havi fix költségek — ennyi megy el akkor is, ha nincs egy fillér bevétel sem</h3>';
+  for(const r of rows) h+='<div class="row"><span class="m">'+r[0]+'</span><b>'+fmt(r[1])+'</b></div>';
+  h+='<div class="hr"></div><div class="row"><span><b>Összesen</b></span><b class="big" style="color:var(--bad)">'+fmt(tot)+' / hó</b></div>';
+  h+='<div class="help">'+(S.form==='mellek'?'Mellékállásban a nettó '+fmt(S.jobNet)+' fizetésed áll ezzel szemben — ami efölött van, azt a vállalkozás termeli meg.':'Ezt a vállalkozásnak kell kitermelnie, minden hónapban. Ehhez jön még negyedévente az adó'+(S.vat?' és az ÁFA':'')+'.')+'</div></div>';
+  return h;
+}
+function pFin(){
+  const open=S.invoices.filter(i=>i.status==='open').sort((a,b)=>a.due-b.due);
+  let h='<div class="grid2"><div>';
+  h+='<div class="card"><h3>Kintlévőségek — kiszámlázva, de még nem fizették</h3>';
+  if(!open.length)h+='<div class="mut">Nincs nyitott számla.</div>';
+  else h+='<table><tr><th>Ügyfél</th><th>Jogcím</th><th class="r">Bruttó</th><th>Esedékes</th><th>Behajtás</th></tr>'
+   +open.map(i=>{
+     let act='<span class="mut">határidőn belül</span>';
+     if(i.collector) act='<span class="tag red">követeléskezelőnél</span>';
+     else if(i.late){
+       if(!i.demanded) act='<button class="btn small sec" '+(S.todayFree<1?'disabled':'')+' onclick="demandPayment('+i.id+');renderAll()">Felszólítás (1 óra)</button>';
+       else act='<span class="tag gray">felszólítva</span> <button class="btn small danger" onclick="hireCollector('+i.id+');renderAll()">Követeléskezelő</button>';
+     }
+     return '<tr><td>'+i.name+'</td><td>'+i.label+'</td><td class="r">'+fmtS(i.gross)+'</td><td>'+(i.late?'<span style="color:var(--bad);font-weight:700">KÉSIK — '+dateShort(i.due)+'</span>':dateShort(i.due))+'</td><td>'+act+'</td></tr>';
+   }).join('')+'</table>';
+  h+='<div class="help">A kivitelezők 60–90 napra fizetnek, ha fizetnek. Ha késnek: a <b>fizetési felszólítás</b> (1 munkaóra) általában hat, de partner esetén −1★ a kapcsolat. Ha az sem elég, jöhet a <b>követeléskezelő</b>: 60 000 Ft előre + 12% sikerdíj, 80% eséllyel behajtja — cserébe −3★ kapcsolat és −2 hírnév, mert a szakmában ez híre megy.</div></div>';
+  h+=fixedCard();
+  h+='<div class="card"><h3>Adók, közelgő kötelezettségek</h3>'
+   +'<div class="row"><span class="m">Felhalmozott adó (negyedévkor fizetendő)</span><b>'+fmt(Math.round(S.taxDue+S.taoAcc))+'</b></div>'
+   +(S.vat?'<div class="row"><span class="m">ÁFA-kötelezettség (negyedévkor)</span><b>'+fmt(Math.round(S.vatOwed))+'</b></div>':'')
+   +'<div class="row"><span class="m">Adózási forma</span><b>'+(S.form==='kft'?'Kft. — 9% TAO + ügyvezetői bér':'átalányadó (45% költséghányad)')+'</b></div>'
+   +'<div class="row"><span class="m">ÁFA</span><b>'+(S.vat?'27%, negyedéves bevallás':'alanyi mentes — 18 M Ft/év alatt')+'</b></div>'
+   +'<div class="help">Az adót nem akkor fizeted, amikor keletkezik — negyedévkor egyben viszi el a pénzt. Erre tartalékolni kell, különben a NAV-nál landolsz.</div></div>';
+  h+='</div><div>';
+  h+='<div class="card"><h3>Hitelek, finanszírozás</h3>';
+  if(S.loans.od.open) h+='<div class="row"><span>Széchenyi folyószámlahitel (5,5%)</span><b>'+fmtS(S.loans.od.used)+' / '+fmtS(S.loans.od.limit)+'</b></div>';
+  else h+='<div class="row"><span>Széchenyi folyószámlahitel</span><button class="btn small" onclick="openOverdraft();renderPanel()">Igénylés</button></div><div class="help">Államilag támogatott, kb. 5,5%. Kell hozzá: főállás/Kft. és 1 lezárt üzleti év. A keret a bevételed 25%-a. Ez véd meg attól, hogy egy késő számla miatt csődbe menj.</div>';
+  for(const L of S.loans.list) h+='<div class="row"><span>'+L.n+'</span><b>tartozás: '+fmtS(L.balance)+'</b></div>';
+  h+='<div class="hr"></div>'
+   +'<div class="row"><span>Széchenyi beruházási hitel — 10 M Ft, 5%, 7 év</span><button class="btn small sec" onclick="takeLoan(\'beruh\');renderPanel()">Felvétel</button></div>'
+   +'<div class="row"><span>Piaci gyorshitel — 5 M Ft, <b style="color:var(--bad)">18%</b>, 3 év</span><button class="btn small sec" onclick="takeLoan(\'gyors\');renderPanel()">Felvétel</button></div>'
+   +'</div>';
+  h+='<div class="card"><h3>Eredménykimutatás</h3>'+plTable(12)+'</div>';
+  h+='</div></div>';
+  return h;
+}
+
+/* --- Termékek --- */
+function pProd(){
+  let h='<div class="card"><h3>Termékek — a stabil bevétel útja <span class="r mut">a fejlesztésre a projektek utáni szabad órák mennek</span></h3>'
+   +'<div class="help">A fejlesztésre szánt órákat a „Mai nap" fülön, az időbeosztásnál állítod be. Ha a projektjeid elfogynak, a maradék idő is ide csorog át.</div></div>';
+  for(const cfg of PRODUCTS){
+    const st=S.products[cfg.id];
+    h+='<div class="prodc"><div class="row"><b>'+cfg.n+'</b><span class="tag">'+(cfg.saas?fmt(cfg.price)+' / hó / előfizető':fmt(cfg.price)+' / db')+'</span></div>'
+     +'<div class="d" style="color:var(--muted);font-size:12.5px;margin:4px 0 8px">'+cfg.d+'</div>';
+    if(!st){
+      const un=cfg.unlock(S);
+      h+= un? '<button class="btn" onclick="startProduct(\''+cfg.id+'\');renderPanel()">Fejlesztés indítása (~'+cfg.devH+' munkaóra)</button>'
+        : '<span class="tag gray">Zárolva — '+cfg.unlockTxt+'</span>';
+    } else if(st.dev){
+      const pct=Math.round(st.devDone/cfg.devH*100);
+      h+='<div class="bar"><i style="width:'+pct+'%"></i></div><div class="mut">fejlesztés alatt: '+pct+'% ('+Math.round(st.devDone)+' / '+cfg.devH+' óra)</div>';
+    } else {
+      h+='<div class="row"><span class="m">'+(cfg.saas?('Előfizetők: <b>'+Math.round(st.subs)+'</b>'):'Eladva összesen: <b>'+st.sold+' db</b>')+'</span><span>múlt havi bevétel: <b style="color:var(--ok)">'+fmt(st.revLast)+'</b></span></div>';
+      if(cfg.launch)h+='<button class="btn small sec" onclick="relaunchCourse();renderPanel()">Újraindító kampány (250 000 Ft)</button>';
+    }
+    h+='</div>';
+  }
+  h+='<div class="help">A termékbevétel akkor is csöpög, amikor nincs projekt — válságban ez tartja életben az irodát. A SaaS lassan épül, de a győzelemhez kelleni fog.</div>';
+  h+='<div class="card" style="margin-top:12px"><h3>Belső fejlesztések — a saját irodád szerszámai <span class="r mut">nem hoznak bevételt, de hatékonyabbá tesznek</span></h3>';
+  for(const cfg of INTERNALS){
+    const st=S.internals[cfg.id];
+    h+='<div class="prodc"><div class="row"><b>'+cfg.n+'</b>'+(st&&st.live?'<span class="tag green">AKTÍV</span>':'<span class="tag gray">'+fmt(cfg.cost)+' + ~'+cfg.devH+' óra'+(cfg.monthly?' + '+fmt(cfg.monthly)+'/hó':'')+'</span>')+'</div>'
+     +'<div style="color:var(--muted);font-size:12.5px;margin:4px 0 8px">'+cfg.d+'</div>';
+    if(!st){
+      const un=cfg.unlock(S);
+      h+= un? '<button class="btn" onclick="startInternal(\''+cfg.id+'\');renderPanel()">Fejlesztés indítása</button>'
+        : '<span class="tag gray">Zárolva — '+cfg.unlockTxt+'</span>';
+    } else if(st.dev){
+      const pct=Math.round(st.devDone/cfg.devH*100);
+      h+='<div class="bar"><i style="width:'+pct+'%"></i></div><div class="mut">fejlesztés alatt: '+pct+'% ('+Math.round(st.devDone)+' / '+cfg.devH+' óra)</div>';
+    } else {
+      h+='<div class="row"><span style="color:var(--ok);font-weight:600">✓ '+cfg.eff+'</span></div>';
+    }
+    h+='</div>';
+  }
+  h+='<div class="help">A belső fejlesztésekre is a termékfejlesztési órakeretedből jut idő. Egyszeri bekerülés + havi üzemeltetés, cserébe tartós versenyelőny.</div></div>';
+  return h;
+}
+
+/* --- Csapat --- */
+function subStars(q){ const n=Math.round(q*5); return '★'.repeat(n)+'☆'.repeat(5-n); }
+function pTeam(){
+  let h='<div class="card"><h3>Alvállalkozó tervezők ('+S.subs.length+' / 3 aktív) <span class="r mut">ők rajzolnak, te írsz alá — EV-ként is bevonhatók</span></h3>';
+  S.subs.forEach((sb,i)=>{
+    h+='<div class="empl"><div><b>'+sb.name+'</b> <span class="tag gold">'+subStars(sb.qual)+'</span>'
+     +'<div class="mut" style="margin-top:3px">'+fmt(sb.rate)+' / óra · ~'+sb.cap+' óra/hét kapacitás · csak a ledolgozott órát számlázza</div></div>'
+     +'<div><button class="btn small danger" onclick="dropSub('+i+');renderPanel()">Elengedés</button></div></div>';
+  });
+  if(!S.subs.length)h+='<div class="mut">Nincs aktív alvállalkozód.</div>';
+  if(S.subCostMonth>0)h+='<div class="row"><span class="m">E havi alvállalkozói költség eddig</span><b>'+fmt(Math.round(S.subCostMonth))+'</b></div>';
+  h+='<div class="hr"></div><div class="mut" style="font-size:12px;margin-bottom:6px">ELÉRHETŐ SZABADÚSZÓK (a hírnév többet és jobbakat hoz; a lista havonta frissül)</div>';
+  if(!S.subPool.length)h+='<div class="mut">Most senki nem ér rá a piacon.</div>';
+  S.subPool.forEach((sb,i)=>{
+    h+='<div class="empl"><div><b>'+sb.name+'</b> <span class="tag gold">'+subStars(sb.qual)+'</span>'
+     +'<div class="mut" style="margin-top:3px">'+fmt(sb.rate)+' / óra · ~'+sb.cap+' óra/hét</div></div>'
+     +'<div><button class="btn small" onclick="hireSub('+i+');renderPanel()">Bevonás</button></div></div>';
+  });
+  h+='<div class="help">Az alvállalkozó azonnal kapacitást ad, és csak a ténylegesen ledolgozott órákat fizeted hó végén — de vékonyabb a margó, a gyengébb minőség javítási többletmunkát szül, aláírni pedig nem tud helyetted (a párhuzamos projektek számát nem növeli). Bármikor kiszállhat, ha jobb munkát talál.</div></div>';
+  h+='<div class="card"><h3>Munkatársak ('+S.employees.length+' fő)</h3>';
+  if(S.form!=='kft')h+='<div class="help">Alkalmazottat csak Kft. formában vehetsz fel (lásd a „Cég" fület) — addig az alvállalkozók jelentik a kapacitásbővítést.</div>';
+  if(!S.employees.length&&S.form==='kft')h+='<div class="mut">Még nincs alkalmazottad.</div>';
+  S.employees.forEach((em,i)=>{
+    const lv=EMP_LEVELS.find(l=>l.id===em.lvl);
+    const newb=S.day-em.hired<35;
+    h+='<div class="empl"><div><b>'+em.name+'</b> <span class="tag">'+lv.n+'</span>'+(em.lic?'<span class="tag gold">aláírási jog</span>':'')+(newb?'<span class="tag gray">betanulás</span>':'')
+     +'<div class="mut" style="margin-top:3px">bruttó '+fmt(em.gross)+' /hó (cégnek: '+fmt(Math.round(em.gross*1.13))+') · kapacitás ~'+em.eff.toFixed(0)+' h/hét · morál '+Math.round(em.morale)+'%</div></div>'
+     +'<div style="display:flex;gap:6px;align-items:center"><button class="btn small sec" onclick="giveRaise('+i+');renderPanel()">Béremelés +12%</button><button class="btn small danger" onclick="fire('+i+');renderPanel()">Elbocsátás</button></div></div>';
+  });
+  h+='</div>';
+  if(S.form==='kft'){
+    h+='<div class="card"><h3>Jelentkezők <span class="r mut">a piacon kevés a jó gépésztervező — válogatni nem nagyon lehet</span></h3>';
+    if(!S.candidates.length)h+='<div class="mut">Most nincs jelentkező. Havonta érkeznek újak; a magasabb hírnév jobb embereket vonz.</div>';
+    S.candidates.forEach((c,i)=>{
+      const lv=EMP_LEVELS.find(l=>l.id===c.lvl);
+      h+='<div class="empl"><div><b>'+c.name+'</b> <span class="tag">'+lv.n+'</span>'+(c.lic?'<span class="tag gold">aláírási jog</span>':'')
+       +'<div class="mut" style="margin-top:3px">'+lv.d+'</div>'
+       +'<div class="mut">bérigény: bruttó '+fmt(c.gross)+' /hó · kapacitás ~'+c.eff.toFixed(0)+' h/hét</div></div>'
+       +'<div><button class="btn small" onclick="hire('+i+');renderPanel()">Felvétel</button></div></div>';
+    });
+    h+='<div class="help">A betanulás ~1,5 hónap, addig 40%-on teljesítenek. Minden alkalmazott visz ~1,5 óra/hét vezetői idődből. A senior drága, de nélküle nem futtathatsz sok párhuzamos projektet (aláírási jog).</div></div>';
+  }
+  return h;
+}
+
+/* --- Kapcsolatok --- */
+function pNet(){
+  let h='<div class="card"><h3>Építész partnerek <span class="r mut">a visszatérő megrendelő a legjobb marketing</span></h3>';
+  if(!S.partners.length)h+='<div class="mut">Még nincs állandó partnered. Nyerj el építészirodáktól munkákat, teljesíts határidőre — és jönnek maguktól.</div>';
+  for(const p of S.partners.slice().sort((a,b)=>b.rel-a.rel)){
+    h+='<div class="row"><b>'+p.name+'</b><span style="color:var(--gold);letter-spacing:2px">'+starStr(p.rel)+'</span></div>';
+  }
+  h+='<div class="help">Minden csillag több közvetlen megkeresést és jobb nyerési esélyt jelent náluk. Késés vagy hosszú csend rontja a kapcsolatot. A típusterv-katalógust is ők veszik.</div></div>';
+  return h;
+}
+
+/* --- Cég --- */
+function pCeg(){
+  let h='<div class="grid2"><div>';
+  h+='<div class="card"><h3>Cégforma és mérföldkövek</h3>'
+   +'<div class="row"><span>Jelenlegi forma</span><b>'+stageName()+'</b></div>';
+  if(S.form==='mellek')h+='<div class="hr"></div><button class="btn" onclick="goFullTime()">Felmondás a főállásban → főállású EV</button><div class="help">Több idő, több és nagyobb munka — de oda a havi '+fmt(S.jobNet)+' biztos fizetés, és jön a minimum járulék.</div>';
+  if(S.form==='foallas')h+='<div class="hr"></div><button class="btn" onclick="foundKft()">Kft. alapítása (~3,6 M Ft kell hozzá)</button><div class="help">Alkalmazottak, nagy projektek, közbeszerzés, beruházási hitel — cserébe drágább működés és ÁFA-kör.</div>';
+  if(S.form==='kft')h+='<div class="help">A Kft. áll. Következő szint: csapat, iroda, termékek — és a piacvezető pozíció.</div>';
+  h+='</div>';
+  h+='<div class="card"><h3>Iroda</h3>'
+   +'<div class="row"><span>Jelenlegi</span><b>'+['Home office (max 2 fő)','Kis bérelt iroda — 290 000 Ft/hó (max 6 fő)','Reprezentatív iroda — 680 000 Ft/hó'][S.office]+'</b></div>'
+   +(S.office<1?'<button class="btn small sec" onclick="S.office=1;addLog(\'Kis irodát béreltél.\',\'info\');renderPanel()">Kis iroda bérlése</button> ':'')
+   +(S.office<2&&S.form==='kft'?'<button class="btn small sec" onclick="S.office=2;addLog(\'Reprezentatív irodába költöztél. Hírnév +5.\',\'info\');S.rep=clamp(S.rep+5,0,100);renderPanel()">Nagy iroda bérlése</button>':'')
+   +'</div>';
+  h+='<div class="card"><h3>Felelősségbiztosítás</h3>'
+   +'<div class="row"><span>Tervezői felelősségbiztosítás ('+(S.form==='kft'?'46':'24')+' e Ft/hó)</span><button class="btn small '+(S.insurance?'':'sec')+'" onclick="S.insurance=!S.insurance;renderPanel()">'+(S.insurance?'BEKAPCSOLVA':'kikapcsolva')+'</button></div>'
+   +'<div class="help">Tervhiba esetén a biztosító fizet (100 e Ft önrésszel). Állami tenderhez kötelező. Nélküle egy komolyabb reklamáció milliókba kerülhet.</div></div>';
+  h+='</div><div>';
+  if(S.form!=='kft'){
+    h+='<div class="card"><h3>Megélhetés — magánkivét</h3>'
+     +'<div class="slider-row"><input type="range" min="250000" max="700000" step="10000" value="'+S.living+'" oninput="S.living=+this.value;this.nextElementSibling.textContent=fmt(S.living)+\' / hó\'"><b>'+fmt(S.living)+' / hó</b></div>'
+     +'<div class="help">Lakhatás, rezsi, kaja, család — ennyi megy ki a kasszából minden hónap elején, bevételtől függetlenül. Szerényebb életmóddal több marad a cégben, de a 250 ezres alj alá nem tudsz menni. Évente az inflációval nő.</div></div>';
+  } else {
+    h+='<div class="card"><h3>Megélhetés</h3><div class="help">Kft.-ben a megélhetésedet a kötelező ügyvezetői béred fedezi (~430 000 Ft/hó céges költség) — külön magánkivét nincs.</div></div>';
+  }
+  h+='<div class="card"><h3>Marketing</h3>'
+   +'<div class="slider-row"><input type="range" min="0" max="500000" step="10000" value="'+S.marketing+'" oninput="S.marketing=+this.value;this.nextElementSibling.textContent=fmt(S.marketing)+\' / hó\'"><b>'+fmt(S.marketing)+' / hó</b></div>'
+   +'<div class="help">Honlap, hirdetések, szakmai jelenlét. Több megkeresést hoz, és a termékek eladását is hajtja. Túl sok pénzt is el lehet égetni vele.</div></div>';
+  h+='<div class="card"><h3>Könyvelő</h3>'
+   +['Olcsó (28 e Ft/hó) — kockázatos, NAV-bírság eshet be','Megbízható (48 e Ft/hó)','Prémium adótanácsadó (98 e Ft/hó) — adóoptimalizálás (−7% adó)'].map((t,i)=>'<div class="row"><span>'+t+'</span><button class="btn small '+(S.accountant===i?'':'sec')+'" onclick="S.accountant='+i+';renderPanel()">'+(S.accountant===i?'ő viszi':'váltás')+'</button></div>').join('')
+   +'</div>';
+  h+='<div class="card"><h3>Mentés / betöltés</h3>'
+   +'<button class="btn small sec" onclick="document.getElementById(\'sv\').value=JSON.stringify(S)">Állás mentése a mezőbe</button> '
+   +'<button class="btn small sec" onclick="try{S=JSON.parse(document.getElementById(\'sv\').value);migrateState();toast(\'Betöltve!\',\'ok\');renderAll();}catch(e){toast(\'Hibás mentés!\',\'bad\')}">Betöltés a mezőből</button> '
+   +'<button class="btn small danger" onclick="if(confirm(\'Biztos újrakezded?\'))initGame()">Új játék</button>'
+   +'<div style="margin-top:8px"><textarea id="sv" placeholder="Ide másolhatod a mentett játékállást... A szöveget mentsd el magadnak, és ide visszaillesztve folytathatod."></textarea></div></div>';
+  h+='</div></div>';
+  return h;
+}
+
+/* --- Napló --- */
+function pLog(){
+  return '<div class="card"><h3>Eseménynapló</h3><div class="log">'+S.log.map(l=>'<div><span class="d">'+dateShort(l.d)+'</span><span class="'+l.c+'">'+l.t+'</span></div>').join('')+'</div></div>';
+}
+
+/* ============ MAI NAP ============ */
+function allocPreview(){
+  const w=S.alloc,sum=Math.max(1,w.proj+w.prod+w.net+w.rest),f=Math.max(0,S.todayFree);
+  return {proj:(f*w.proj/sum),prod:(f*w.prod/sum),net:(f*w.net/sum),rest:(f*w.rest/sum)};
+}
+function allocSlider(key,label,desc){
+  return '<div style="margin-bottom:10px"><div class="row"><span><b>'+label+'</b> <span class="mut">'+desc+'</span></span><b id="al_'+key+'">'+allocPreview()[key].toFixed(1)+' óra</b></div>'
+   +'<input type="range" min="0" max="10" step="1" value="'+S.alloc[key]+'" oninput="S.alloc.'+key+'=+this.value;updateAlloc()"></div>';
+}
+function updateAlloc(){
+  const p=allocPreview();
+  for(const k of ['proj','prod','net','rest']){ const el=document.getElementById('al_'+k); if(el)el.textContent=p[k].toFixed(1)+' óra'; }
+}
+function pDay(){
+  const d=dow(S.day), wk=d<5;
+  const sick=S.day<S.sickUntil;
+  let h='<div class="grid2"><div>';
+  h+='<div class="card"><h3>'+dateStr(S.day)+' — '+HDOW[d]+'</h3>';
+  if(S.form==='mellek'&&wk) h+='<div class="row"><span class="m">Főállás (kötelező kör)</span><b>8 óra</b></div>';
+  h+='<div class="row"><span class="m">Szabad munkaórád mára</span><b class="big">'+S.todayFree+' óra</b></div>';
+  if(sick)h+='<div class="row"><span style="color:var(--bad);font-weight:700">Betegállományban vagy — minimál tempó ('+Math.max(0,S.sickUntil-S.day)+' nap még)</span></div>';
+  h+='<div class="help">Az ajánlatírás azonnal órákat fogyaszt (kis terv 1, közepes 2, nagy 4, tender 8 óra). Ami megmarad, azt a lenti arányok szerint osztod be a nap végén.</div></div>';
+  h+='<div class="card"><h3>Időbeosztás — mire menjen a maradék idő?</h3>'
+   +allocSlider('proj','Projektmunka','a legszorosabb határidejű tervek készülnek')
+   +allocSlider('prod','Termékfejlesztés','Excel-csomag, típustervek, webapp, kurzus')
+   +allocSlider('net','Kapcsolatépítés','építész kávék, telefonok — új megkeresések, hírnév')
+   +allocSlider('rest','Pihenés','stressz levezetése — kiégés ellen')
+   +(S.form!=='mellek'?'<div class="row" style="margin-top:6px"><span>Hétvégén is dolgozom</span><button class="btn small '+(S.weekendWork?'':'sec')+'" onclick="S.weekendWork=!S.weekendWork;renderAll()">'+(S.weekendWork?'IGEN (+9 óra/hétvége, több stressz)':'nem')+'</button></div>':'')
+   +'</div>';
+  h+='<div class="card" style="text-align:center">'
+   +'<button class="btn" style="font-size:16px;padding:12px 30px" onclick="nextDay()">Nap lezárása ▶</button> '
+   +'<button class="btn sec" style="padding:12px 18px" onclick="nextDays(7)">▶▶ 7 nap</button>'
+   +'<div class="help">A „7 nap" a mostani időbeosztással pörgeti a napokat, és megáll, ha esemény vagy új ajánlatkérés jön.</div></div>';
+  h+='</div><div>';
+  // figyelmeztetések
+  const soon=S.projects.filter(p=>p.deadline-S.day<10).sort((a,b)=>a.deadline-b.deadline);
+  const dueInv=S.invoices.filter(i=>i.status==='open').sort((a,b)=>a.due-b.due).slice(0,5);
+  h+='<div class="card"><h3>Mai teendők, közelgő határidők</h3>';
+  if(S.leads.length)h+='<div class="row"><span>📋 '+S.leads.length+' ajánlatkérés vár válaszra</span><button class="btn small sec" onclick="switchTab(\'leads\')">Megnézem</button></div>';
+  if(soon.length)for(const p of soon.slice(0,4)){const dl=p.deadline-S.day;h+='<div class="row"><span>'+(dl<0?'🔴':'⏰')+' '+p.tn+' — '+p.name+'</span><b style="'+(dl<3?'color:var(--bad)':'')+'">'+(dl<0?Math.abs(dl)+' napja lejárt!':dl+' nap')+'</b></div>';}
+  if(!S.leads.length&&!soon.length)h+='<div class="mut">Ma nincs égető teendő. Építkezz: termék, kapcsolatok, pihenés.</div>';
+  h+='</div>';
+  h+='<div class="card"><h3>Várható pénzmozgás</h3>';
+  if(dueInv.length)for(const i of dueInv)h+='<div class="row"><span class="m">'+i.name+' ('+i.label+')'+(i.late?' — <b style="color:var(--bad)">késik</b>':'')+'</span><b>+'+fmtS(i.gross)+' · '+dateShort(i.due)+'</b></div>';
+  else h+='<div class="mut">Nincs nyitott számla.</div>';
+  const ftot=fixedRows().reduce((a,r)=>a+r[1],0);
+  h+='<div class="row"><span class="m">Havi fix költség (hó elején terhelődik)</span><b style="color:var(--bad)">−'+fmtS(ftot)+'</b></div>';
+  const c=calDate(S.day);
+  if((c.m%3===2))h+='<div class="row"><span style="color:var(--warn)">⚠ Negyedév vége közeleg: adó'+(S.vat?' + ÁFA':'')+' befizetés jön ('+fmtS(S.taxDue+S.taoAcc+(S.vat?S.vatOwed:0))+')</span></div>';
+  h+='</div>';
+  h+='<div class="card"><h3>Napló (legutóbbi)</h3><div class="log">'+S.log.slice(0,8).map(l=>'<div><span class="d">'+dateShort(l.d)+'</span><span class="'+l.c+'">'+l.t+'</span></div>').join('')+'</div></div>';
+  h+='</div></div>';
+  return h;
+}
+
+/* ============ HAVI RIPORT ============ */
+function estRemainingBill(p){
+  const c=CLIENTS[p.cl];
+  let rest=p.price;
+  if(c.advance>0) rest-=p.price*c.advance;
+  else if(p.price>=1800000) rest-=p.price*0.3;
+  if(p.midBilled) rest-=p.price*0.3;
+  return Math.max(0,rest);
+}
+function ledgerRows(list,neg){
+  const m={};
+  for(const e of list) m[e.t]=(m[e.t]||0)+e.a;
+  const arr=Object.entries(m).sort((a,b)=>b[1]-a[1]);
+  let h='', shown=arr.slice(0,11);
+  for(const r of shown) h+='<div class="row"><span class="m">'+r[0]+'</span><b style="color:'+(neg?'var(--bad)':'var(--ok)')+'">'+(neg?'−':'+')+fmtS(r[1])+'</b></div>';
+  if(arr.length>11)h+='<div class="mut">… és még '+(arr.length-11)+' kisebb tétel</div>';
+  if(!arr.length)h+='<div class="mut">nem volt tétel</div>';
+  return h;
+}
+function buildMonthlyReport(mk,rev,cost,profit){
+  const y=Math.floor(mk/12),mo=mk%12;
+  const led=S.monthLedger||[];
+  const ins=led.filter(e=>e.k!=='out'), outs=led.filter(e=>e.k==='out');
+  const openInv=S.invoices.filter(i=>i.status==='open').sort((a,b)=>a.due-b.due);
+  const ar=openInv.reduce((a,i)=>a+i.gross,0);
+  const unbilled=S.projects.reduce((a,p)=>a+estRemainingBill(p),0);
+  const quoted=S.quotes.reduce((a,q)=>a+q.price,0);
+  const fixTot=fixedRows().reduce((a,r)=>a+r[1],0);
+  const debts=[];
+  if(S.taxDue+S.taoAcc>0)debts.push(['Felhalmozott adó (negyedévkor esedékes)',Math.round(S.taxDue+S.taoAcc)]);
+  if(S.vat&&S.vatOwed>0)debts.push(['ÁFA-kötelezettség',Math.round(S.vatOwed)]);
+  if(S.loans.od.used>0)debts.push(['Folyószámlahitel kihasználva',Math.round(S.loans.od.used)]);
+  for(const L of S.loans.list)debts.push([L.n+' fennálló tőke',Math.round(L.balance)]);
+  const debtTot=debts.reduce((a,d)=>a+d[1],0);
+  let h='<div class="grid2"><div>';
+  const flow=rev+(S.form==='mellek'?S.jobNet:0)-cost;
+  h+='<h4>Pénzügyi összegzés</h4>'
+   +'<div class="row"><span>Vállalkozási bevétel</span><b style="color:var(--ok)">+'+fmtS(rev)+'</b></div>'
+   +(S.form==='mellek'?'<div class="row"><span>Főállású fizetés (magán)</span><b style="color:var(--ok)">+'+fmtS(S.jobNet)+'</b></div>':'')
+   +'<div class="row"><span>Összes kiadás (megélhetéssel együtt)</span><b style="color:var(--bad)">−'+fmtS(cost)+'</b></div>'
+   +'<div class="row tot"><span>Havi nettó pénzáram</span><b style="color:'+(flow>=0?'var(--ok)':'var(--bad)')+'">'+(flow>=0?'+':'')+fmtS(flow)+'</b></div>'
+   +'<div class="row"><span class="m">Ebből a vállalkozás eredménye</span><b style="color:'+(profit>=0?'var(--ok)':'var(--bad)')+'">'+fmtS(profit)+'</b></div>'
+   +'<div class="row"><span>Készpénz a hónap végén</span><b>'+fmtS(S.cash)+'</b></div>';
+  h+='<h4>Bevételek részletesen</h4>'+ledgerRows(ins,false);
+  h+='<h4>Kiadások részletesen</h4>'+ledgerRows(outs,true);
+  h+='</div><div>';
+  h+='<h4>Folyamatban lévő munkák ('+S.projects.length+' db)</h4>';
+  if(!S.projects.length)h+='<div class="mut">nincs futó projekt — ideje ajánlatot adni!</div>';
+  for(const p of S.projects.slice().sort((a,b)=>a.deadline-b.deadline).slice(0,7)){
+    const dl=p.deadline-S.day;
+    h+='<div class="row"><span class="m">'+p.tn+' · '+Math.round((1-p.hLeft/p.hTot)*100)+'%'+(dl<0?' · <b style="color:var(--bad)">LEJÁRT</b>':' · '+dl+' nap')+'</span><b>'+fmtS(estRemainingBill(p))+'</b></div>';
+  }
+  if(S.projects.length>7)h+='<div class="mut">… és még '+(S.projects.length-7)+' projekt</div>';
+  h+='<h4>Várható bevételek</h4>'
+   +'<div class="row"><span>Kiszámlázva, fizetésre vár ('+openInv.length+' számla)</span><b>'+fmtS(ar)+'</b></div>'
+   +(openInv.filter(i=>i.late).length?'<div class="row"><span class="m">ebből késésben</span><b style="color:var(--bad)">'+fmtS(openInv.filter(i=>i.late).reduce((a,i)=>a+i.gross,0))+'</b></div>':'')
+   +'<div class="row"><span>Futó munkák még ki nem számlázott része</span><b>'+fmtS(unbilled)+'</b></div>'
+   +(quoted?'<div class="row"><span>Elbírálás alatt lévő ajánlatok ('+S.quotes.length+' db)</span><b class="mut">'+fmtS(quoted)+'</b></div>':'')
+   +'<div class="row tot"><span>Összesen a csőben</span><b>'+fmtS(ar+unbilled)+'</b></div>';
+  h+='<h4>Várható kiadások, kötelezettségek</h4>'
+   +'<div class="row"><span>Jövő havi fix költség (becslés)</span><b style="color:var(--bad)">−'+fmtS(fixTot)+'</b></div>';
+  for(const d of debts)h+='<div class="row"><span class="m">'+d[0]+'</span><b style="color:var(--bad)">'+fmtS(d[1])+'</b></div>';
+  h+='<div class="row tot"><span>Összes tartozás</span><b style="color:var(--bad)">'+fmtS(debtTot)+'</b></div>';
+  h+='</div></div>';
+  queueEvent({t:'📊 Havi zárás — '+y+'. '+HMON[mo], b:h, wide:true,
+    o:[{l:'Rendben, jöhet a következő hónap!',s:'',f:()=>{}}]});
+  S.monthLedger=[];
+}
+
+/* ============ MODÁL ============ */
+function showNextEvent(){
+  if(modalOpen||!S.evQ.length)return;
+  const ev=S.evQ.shift();
+  modalOpen=true;
+  const w=document.getElementById('modalwrap'), m=document.getElementById('modal');
+  m.classList.toggle('wide',!!ev.wide);
+  m.innerHTML='<h2>'+ev.t+'</h2><div class="body'+(ev.wide?' rep':'')+'">'+ev.b+'</div><div class="opts">'
+   +ev.o.map((o,i)=>'<button onclick="modalPick('+i+')"><b>'+o.l+'</b>'+(o.s?'<span>'+o.s+'</span>':'')+'</button>').join('')+'</div>';
+  w.classList.add('on');
+  window._ev=ev;
+}
+function modalPick(i){
+  const ev=window._ev;
+  document.getElementById('modalwrap').classList.remove('on');
+  modalOpen=false;
+  ev.o[i].f();
+  renderAll();
+  showNextEvent();
+}
+
+/* ============ KÖRÖK (MOTOR) ============ */
+function dailyWorld(){
+  if(!S.cashSeries)S.cashSeries=[];
+  const r=leadRate();
+  if(chance(Math.min(0.9,r))) genLead();
+  if(r>1&&chance(r-1)) genLead();
+  for(let i=S.quotes.length-1;i>=0;i--){ if(S.day>=S.quotes[i].resolve){ const q=S.quotes.splice(i,1)[0]; resolveQuote(q); } }
+  S.leads=S.leads.filter(l=>l.expires>S.day);
+  processInvoices();
+  processMods();
+  if(S.projects.length&&chance(iLive('aitan')?0.005:0.012)){
+    const p=pick(S.projects);
+    if(!p.rework){ p.rework=1; const extra=Math.round(p.hTot*rnd(0.1,0.22)); p.hLeft+=extra;
+      addLog('Az építész áttervezett: +'+extra+' óra többletmunka — '+p.tn+' ('+p.name+')','warn'); }
+  }
+  const mk=monthKey(S.day);
+  if(mk!==S.lastMonthKey){ S.lastMonthKey=mk; monthlyClose(); }
+  if(S.day>=S.nextEvent){ fireRandomEvent(); S.nextEvent=S.day+ri(8,20); }
+  S.cashSeries.push(Math.round(S.cash)); if(S.cashSeries.length>400)S.cashSeries.shift();
+  checkSolvency(); checkWin();
+}
+function advanceDay(){
+  endOfDayWork();
+  S.day++;
+  newDaySetup();
+  dailyWorld();
+}
+function nextDay(){
+  if(S.over||modalOpen)return;
+  advanceDay();
+  renderAll(); showNextEvent();
+}
+function nextDays(n){
+  if(S.over||modalOpen)return;
+  const lb=S.leads.length;
+  for(let i=0;i<n;i++){
+    advanceDay();
+    if(S.evQ.length||S.over)break;
+    if(S.leads.length>lb){ toast('Új ajánlatkérés érkezett — megálltunk.','ok'); break; }
+  }
+  renderAll(); showNextEvent();
+}
+function renderAll(){ renderHeader(); renderKpis(); renderTabs(); renderPanel(); }
+
+/* ============ INDÍTÁS ============ */
+function initGame(){
+  S=newState();
+  S.cashSeries=[S.cash];
+  uiPrices={}; curTab='day';
+  newDaySetup();
+  genSubPool();
+  addLog('2026. január 1. — Az épületgépész vállalkozásod hivatalosan is elindult (mellékállásban).','info');
+  genLead(); genLead();
+  renderAll();
+  queueEvent({t:'Saját iroda. Egyszer. Talán.',
+    b:'Épületgépész tervező vagy: nappal alkalmazott egy irodában (nettó '+fmt(S.jobNet)+'/hó), este a konyhaasztalnál rajzolod a saját munkáidat. Egyéni vállalkozást indítottál átalányadóval, van '+fmt(S.cash)+' megtakarításod, havi ~350 000 Ft megélhetési költséged és egy álmod: saját tervezőiroda, saját termékekkel, stabil bevétellel.<br><br>'
+     +'<b>Így megy a játék:</b> minden kör egy nap. Hétköznap este ~3, hétvégén több szabad órád van. Ajánlatot írni időbe kerül, a maradék órákat a „Mai nap" fülön osztod be: projektmunka, termékfejlesztés, kapcsolatépítés, pihenés. A „Nap lezárása" gombbal lépsz tovább. Ha kevés a kezed, a Csapat fülön alvállalkozó tervezőket vonhatsz be már EV-ként is — alkalmazottat majd csak a Kft. után.<br><br>'
+     +'<b>Amire számíts:</b> az ügyfelek alkudnak, a kivitelezők késve fizetnek (vagy sehogy), sokszor az olcsóbb konkurens nyer, az adót negyedévente egyben viszi el a NAV — és ha nem pihensz, kiégsz.',
+    o:[{l:'Vágjunk bele!',s:'Sok szerencsét — kelleni fog.',f:()=>{}}]});
+  showNextEvent();
+}
+window.addEventListener('load',()=>{ initGame(); });
+</script>
+</body>
+</html>
