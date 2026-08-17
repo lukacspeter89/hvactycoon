@@ -4,7 +4,7 @@
 
 *A turn-based business simulation game about building an HVAC/MEP design office in Hungary. Hungarian language only.*
 
-▶️ **Játék indítása: [https://GITHUB-FELHASZNALONEV.github.io/hvactycoon/](https://GITHUB-FELHASZNALONEV.github.io/hvactycoon/)**
+▶️ **Játék indítása: [https://lukacspeter89.github.io/hvactycoon/](https://GITHUB-FELHASZNALONEV.github.io/hvactycoon/)**
 
 ---
 
